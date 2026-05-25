@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Personal Hub API
+
+Globals:
+  Function:
+    Runtime: python3.13
+    Timeout: 30
+    MemorySize: 256
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref ContentTable
+
+Resources:
+  # API Gateway
+  HubApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: dev
+
+  # Lambda Function
+  ContentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: personal-hub-content
+      Handler: src/handlers/content.handler
+      CodeUri: .
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ContentTable
+      Events:
+        ListContent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /content
+            Method: GET
+        CreateContent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /content
+            Method: POST
+
+  # DynamoDB
+  ContentTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: personal-hub-content
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+Outputs:
+  ApiEndpoint:
+    Description: API endpoint
+    Value: !Sub https://${HubApi}.execute-api.${AWS::Region}.amazonaws.com/dev

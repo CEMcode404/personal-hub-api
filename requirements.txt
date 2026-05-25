@@ -1,5 +1,8 @@
+# Direct dependencies
 aws_lambda_powertools==3.29.0
 boto3==1.43.14
+
+# Transitive dependencies (auto-installed)
 botocore==1.43.14
 jmespath==1.1.0
 python-dateutil==2.9.0.post0
