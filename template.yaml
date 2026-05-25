@@ -16,19 +16,27 @@ Resources:
   HubApi:
     Type: AWS::Serverless::HttpApi
     Properties:
-      StageName: dev
+      StageName: $default
 
   # Lambda Function
   ContentFunction:
     Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: python3.13
     Properties:
       FunctionName: personal-hub-content
-      Handler: src/handlers/content.handler
+      Handler: src.handlers.content.handler
       CodeUri: .
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ContentTable
       Events:
+        HealthCheck:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /health
+            Method: GET
         ListContent:
           Type: HttpApi
           Properties:
