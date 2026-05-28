@@ -4,10 +4,13 @@ from src.models.content import Content
 
 TABLE = "personal-hub-content"
 
-def find_all(limit: int = 10, cursor: dict = None):
+def find_all(limit: int = 10, cursor: dict = None, slug: str = None):
     kwargs = {"Limit": limit}
     if cursor:
         kwargs["ExclusiveStartKey"] = cursor
+    if slug:
+        kwargs["FilterExpression"] = "slug = :slug"
+        kwargs["ExpressionAttributeValues"] = {":slug": slug}
     result = get_table(TABLE).scan(**kwargs)
     return {
         "items": result.get("Items", []),

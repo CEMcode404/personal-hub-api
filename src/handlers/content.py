@@ -18,8 +18,9 @@ def list_content():
     params = router.current_event.query_string_parameters or {}
     limit = int(params.get("limit", 10))
     cursor_str = params.get("cursor")
+    slug = params.get("slug")
     cursor = json.loads(cursor_str) if cursor_str else None
-    result = content_service.list_all(limit=limit, cursor=cursor)
+    result = content_service.list_all(limit=limit, cursor=cursor, slug=slug)
     return success(result)
 
 @router.post("")
