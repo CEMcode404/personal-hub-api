@@ -1,4 +1,4 @@
-.PHONY: local stop reset setup
+.PHONY: local stop reset setup reload
 
 setup:
 	AWS_ACCESS_KEY_ID=fake AWS_SECRET_ACCESS_KEY=fake aws dynamodb create-table \
@@ -14,6 +14,10 @@ local:
 	docker compose up -d --wait
 	$(MAKE) setup
 	AWS_ACCESS_KEY_ID=fake AWS_SECRET_ACCESS_KEY=fake AWS_DEFAULT_REGION=ap-southeast-1 APP_ENV=local sam local start-api --env-vars env.local.json
+
+reload:
+	docker compose down
+	${MAKE} local
 
 stop:
 	docker compose down
