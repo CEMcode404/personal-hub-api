@@ -17,7 +17,10 @@ local:
 
 reload:
 	docker compose down
-	${MAKE} local
+	sam build --no-cached
+	docker compose up -d --wait
+	$(MAKE) setup
+	AWS_ACCESS_KEY_ID=fake AWS_SECRET_ACCESS_KEY=fake AWS_DEFAULT_REGION=ap-southeast-1 APP_ENV=local sam local start-api --env-vars env.local.json
 
 stop:
 	docker compose down
