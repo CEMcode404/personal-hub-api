@@ -8,6 +8,12 @@ from slugify import slugify
 def list_all(limit: int = 10, cursor: dict = None, slug: str = None):
     return content_repo.find_all(limit=limit, cursor=cursor, slug=slug)
 
+def get_by_id(id: str):
+    item = content_repo.find_by_id(id)
+    if not item:
+        raise ValueError("Content not found")
+    return item
+
 def create(body: CreateContentRequest):
     now = datetime.now(timezone.utc).isoformat()
     item = Content(

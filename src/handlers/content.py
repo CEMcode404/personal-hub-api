@@ -23,6 +23,11 @@ def list_content():
     result = content_service.list_all(limit=limit, cursor=cursor, slug=slug)
     return success(result)
 
+@router.get("/<id>")
+@handle_errors
+def get_content(id: str):
+    return success(content_service.get_by_id(id))
+
 @router.post("")
 @handle_errors
 def create_content(body: Annotated[CreateContentRequest, Body()]):

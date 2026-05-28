@@ -44,6 +44,12 @@ Resources:
             ApiId: !Ref HubApi
             Path: /content
             Method: GET
+        GetContent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /content/{id}
+            Method: GET
         CreateContent:
           Type: HttpApi
           Properties:
