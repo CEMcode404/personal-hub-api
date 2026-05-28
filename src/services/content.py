@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from src.schemas.content import CreateContentRequest
+from src.schemas.content import CreateContentRequest, UpdateContentRequest
 from src.models.content import Content
 from src.repositories import content as content_repo
 from slugify import slugify
@@ -25,3 +25,18 @@ def create(body: CreateContentRequest):
     )
     content_repo.save(item)
     return item
+
+def update(id: str, body: UpdateContentRequest):
+    existing = content_repo.find_by_id(id)
+    if not existing:
+        raise ValueError("Content not found")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    
+    if "title" in updates:
+        updates["slug"] = slugify(updates["title"])
+    
+    updates["updated_at"] = now
+    content_repo.update(id, updates)
+    return {**existing, **updates}

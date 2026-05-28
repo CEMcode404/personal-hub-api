@@ -8,6 +8,21 @@ def find_all():
     result = get_table(TABLE).scan()
     return result["Items"]
 
+def find_by_id(id: str):
+    result = get_table(TABLE).get_item(Key={"id": id})
+    return result.get("Item")
+
 def save(item: Content):
     data = {k: v for k, v in asdict(item).items() if v is not None}
     get_table(TABLE).put_item(Item=data)
+
+def update(id: str, updates: dict):
+    expression = "SET " + ", ".join(f"#{k} = :{k}" for k in updates)
+    attr_names = {f"#{k}": k for k in updates}
+    attr_values = {f":{k}": v for k, v in updates.items()}
+    get_table(TABLE).update_item(
+        Key={"id": id},
+        UpdateExpression=expression,
+        ExpressionAttributeNames=attr_names,
+        ExpressionAttributeValues=attr_values,
+    )

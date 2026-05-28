@@ -50,6 +50,12 @@ Resources:
             ApiId: !Ref HubApi
             Path: /content
             Method: POST
+        UpdateContent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /content/{id}
+            Method: PATCH
         Docs:
           Type: HttpApi
           Properties:
