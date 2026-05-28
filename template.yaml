@@ -11,6 +11,9 @@ Globals:
       Variables:
         DYNAMODB_ENDPOINT_URL: ""
         APP_ENV: ""
+        NOTIFY_PHONE_NUMBER: ""
+        WEBSOCKET_ENDPOINT: ""
+        CONNECTIONS_TABLE: ""
 
 Resources:
   # API Gateway
@@ -35,6 +38,11 @@ Resources:
             TableName: !Ref ResearchTable
         - DynamoDBCrudPolicy:
             TableName: !Ref TodosTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConnectionsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref NotificationsTable
+
       Events:
         HealthCheck:
           Type: HttpApi
@@ -142,6 +150,25 @@ Resources:
             ApiId: !Ref HubApi
             Path: /todo/{id}
             Method: DELETE
+        # Notification endpoints
+        ListNotifications:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /notifications
+            Method: GET
+        ListUnreadNotifications:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /notifications/unread
+            Method: GET
+        MarkNotificationRead:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /notifications/{id}/read
+            Method: PATCH
 
   # DynamoDB
   ContentTable:
@@ -179,6 +206,33 @@ Resources:
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+
+  ConnectionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: personal-hub-connections
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: connectionId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: connectionId
+          KeyType: HASH
+
+  NotificationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: personal-hub-notifications
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
 
 Outputs:
   ApiEndpoint:

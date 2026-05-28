@@ -3,7 +3,8 @@ from datetime import datetime, timezone
 from src.repositories import todo as todo_repo
 from src.schemas.todo import CreateTodoRequest, UpdateTodoRequest
 from src.models.todo import Todo
-from src.services import notification as notification_service
+from datetime import datetime, timezone, timedelta
+from dateutil.relativedelta import relativedelta
 
 def list_all(limit: int = 10, cursor: dict = None):
     return todo_repo.find_all(limit=limit, cursor=cursor)
@@ -49,11 +50,30 @@ def delete(id: str):
         raise ValueError("Todo not found")
     todo_repo.delete(id)
 
+RECURRENCE_MAP = {
+    "daily": lambda dt: dt + timedelta(days=1),
+    "weekly": lambda dt: dt + timedelta(weeks=1),
+    "monthly": lambda dt: dt + relativedelta(months=1),
+    "quarterly": lambda dt: dt + relativedelta(months=3),
+    "semi-annual": lambda dt: dt + relativedelta(months=6),
+    "annual": lambda dt: dt + relativedelta(years=1),
+}
+
 def process_notifications():
+    from src.repositories import todo as todo_repo
+    from src.services import notification as notification_service
     todos = todo_repo.find_pending_notifications()
     for todo in todos:
-        message = f"Todo reminder: {todo['title']}"
-        if todo.get("notify_sms"):
-            notification_service.send_sms(message)
-        if todo.get("notify_web"):
-            notification_service.send_websocket({"type": "todo_reminder", "todo": todo})
+        notification_service.notify(todo)
+        if todo.get("is_recurring") and todo.get("recurrence"):
+            _reschedule(todo)
+
+def _reschedule(todo: dict):
+    from src.repositories import todo as todo_repo
+    recurrence = todo["recurrence"]
+    current_notify_at = datetime.fromisoformat(todo["notify_at"])
+    next_notify_at = RECURRENCE_MAP[recurrence](current_notify_at)
+    todo_repo.update(todo["id"], {
+        "notify_at": next_notify_at.isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    })
