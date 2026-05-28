@@ -10,6 +10,7 @@ Globals:
     Environment:
       Variables:
         DYNAMODB_ENDPOINT_URL: ""
+        APP_ENV: ""
 
 Resources:
   # API Gateway
