@@ -1,5 +1,6 @@
 .venv/
-.env
 .python-version
 .aws-sam/
 dependencies/
+env.local.json
+!env.local.example.json
