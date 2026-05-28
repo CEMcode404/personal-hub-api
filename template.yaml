@@ -20,7 +20,7 @@ Resources:
       StageName: $default
 
   # Lambda Function
-  ContentFunction:
+  ApiFunction:
     Type: AWS::Serverless::Function
     Metadata:
       BuildMethod: python3.13
@@ -31,6 +31,8 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ContentTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ResearchTable
       Events:
         HealthCheck:
           Type: HttpApi
@@ -38,6 +40,7 @@ Resources:
             ApiId: !Ref HubApi
             Path: /content/health
             Method: GET
+        # Content endpoints
         ListContent:
           Type: HttpApi
           Properties:
@@ -68,18 +71,62 @@ Resources:
             ApiId: !Ref HubApi
             Path: /content/{id}
             Method: DELETE
+        # Docs endpoint
         Docs:
           Type: HttpApi
           Properties:
             ApiId: !Ref HubApi
             Path: /docs
             Method: GET
+        # Research endpoints
+        ListResearch:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /research
+            Method: GET
+        GetResearch:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /research/{id}
+            Method: GET
+        CreateResearch:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /research
+            Method: POST
+        UpdateResearch:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /research/{id}
+            Method: PATCH
+        DeleteResearch:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /research/{id}
+            Method: DELETE
 
   # DynamoDB
   ContentTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: personal-hub-content
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  ResearchTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: personal-hub-research
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: id
