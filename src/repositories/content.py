@@ -4,9 +4,15 @@ from src.models.content import Content
 
 TABLE = "personal-hub-content"
 
-def find_all():
-    result = get_table(TABLE).scan()
-    return result["Items"]
+def find_all(limit: int = 10, cursor: dict = None):
+    kwargs = {"Limit": limit}
+    if cursor:
+        kwargs["ExclusiveStartKey"] = cursor
+    result = get_table(TABLE).scan(**kwargs)
+    return {
+        "items": result.get("Items", []),
+        "next_cursor": result.get("LastEvaluatedKey")
+    }
 
 def find_by_id(id: str):
     result = get_table(TABLE).get_item(Key={"id": id})

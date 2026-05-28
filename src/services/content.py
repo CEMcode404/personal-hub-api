@@ -5,8 +5,8 @@ from src.models.content import Content
 from src.repositories import content as content_repo
 from slugify import slugify
 
-def list_all():
-    return content_repo.find_all()
+def list_all(limit: int = 10, cursor: dict = None):
+    return content_repo.find_all(limit=limit, cursor=cursor)
 
 def create(body: CreateContentRequest):
     now = datetime.now(timezone.utc).isoformat()
