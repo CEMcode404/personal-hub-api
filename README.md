@@ -46,20 +46,13 @@ This will:
 
 ### Available Commands
 
-| Command      | Description                                                |
-| ------------ | ---------------------------------------------------------- |
-| `make local` | Start the full local dev environment                       |
-| `make stop`  | Stop all local services (data is preserved)                |
-| `make reset` | Stop all local services and wipe all data                  |
-| `make setup` | Create DynamoDB tables (run once after first `make local`) |
-
-### API Endpoints
-
-| Method | Path              | Description      |
-| ------ | ----------------- | ---------------- |
-| GET    | `/content/health` | Health check     |
-| GET    | `/content`        | List all content |
-| POST   | `/content`        | Create content   |
+| Command       | Description                                                |
+| ------------- | ---------------------------------------------------------- |
+| `make local`  | Start the full local dev environment                       |
+| `make stop`   | Stop all local services (data is preserved)                |
+| `make reset`  | Stop all local services and wipe all data                  |
+| `make setup`  | Create DynamoDB tables (run once after first `make local`) |
+| `make reload` | Reload the page to reflect the new changes                 |
 
 ## Deployment
 
@@ -91,6 +84,7 @@ src/
 ├── services/       # Business logic
 ├── repositories/   # Database operations
 ├── models/         # Data models
+├── schemas/        # requet body validation
 ├── utils/          # Shared utilities
 ├── db.py           # DynamoDB connection
 ├── main.py         # Lambda handler entry point
