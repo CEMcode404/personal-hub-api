@@ -40,3 +40,9 @@ def update(id: str, body: UpdateContentRequest):
     updates["updated_at"] = now
     content_repo.update(id, updates)
     return {**existing, **updates}
+
+def delete(id: str):
+    existing = content_repo.find_by_id(id)
+    if not existing:
+        raise ValueError("Content not found")
+    content_repo.delete(id)

@@ -56,6 +56,12 @@ Resources:
             ApiId: !Ref HubApi
             Path: /content/{id}
             Method: PATCH
+        DeleteContent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /content/{id}
+            Method: DELETE
         Docs:
           Type: HttpApi
           Properties:

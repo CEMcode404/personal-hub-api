@@ -26,3 +26,6 @@ def update(id: str, updates: dict):
         ExpressionAttributeNames=attr_names,
         ExpressionAttributeValues=attr_values,
     )
+
+def delete(id: str):
+    get_table(TABLE).delete_item(Key={"id": id})

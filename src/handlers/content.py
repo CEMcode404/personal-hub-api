@@ -25,3 +25,9 @@ def create_content(body: Annotated[CreateContentRequest, Body()]):
 @handle_errors
 def update_content(id: str, body: Annotated[UpdateContentRequest, Body()]):
     return success(content_service.update(id, body))
+
+@router.delete("/<id>")
+@handle_errors
+def delete_content(id: str):
+    content_service.delete(id)
+    return success({"message": "Content deleted"})
