@@ -49,6 +49,12 @@ Resources:
             ApiId: !Ref HubApi
             Path: /content
             Method: POST
+        Docs:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /docs
+            Method: GET
 
   # DynamoDB
   ContentTable:

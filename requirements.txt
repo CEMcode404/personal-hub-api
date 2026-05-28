@@ -1,6 +1,7 @@
 # Direct dependencies
 aws_lambda_powertools==3.29.0
 boto3==1.43.14
+pydantic
 
 # Transitive dependencies (auto-installed)
 botocore==1.43.14
