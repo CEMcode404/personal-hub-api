@@ -6,7 +6,7 @@ _dynamodb = None
 def get_dynamodb():
     global _dynamodb
     if _dynamodb is None:
-        endpoint = os.environ.get("DYNAMODB_ENDPOINT_URL")
+        endpoint = os.environ.get("DYNAMODB_ENDPOINT_URL") or None
         _dynamodb = boto3.resource("dynamodb", endpoint_url=endpoint)
     return _dynamodb
 
