@@ -14,6 +14,8 @@ Globals:
         NOTIFY_PHONE_NUMBER: ""
         WEBSOCKET_ENDPOINT: ""
         CONNECTIONS_TABLE: ""
+        NOTIFICATION_FUNCTION_ARN: ""
+        SCHEDULER_ROLE_ARN: ""
 
 Resources:
   # API Gateway
@@ -30,6 +32,10 @@ Resources:
     Properties:
       FunctionName: personal-hub-content
       Handler: src.main.handler
+      Environment:
+        Variables:
+          NOTIFICATION_FUNCTION_ARN: !GetAtt NotificationFunction.Arn
+          SCHEDULER_ROLE_ARN: !GetAtt SchedulerRole.Arn
       CodeUri: .
       Policies:
         - DynamoDBCrudPolicy:
@@ -170,6 +176,50 @@ Resources:
             Path: /notifications/{id}/read
             Method: PATCH
 
+  NotificationFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: python3.13
+    Properties:
+      FunctionName: personal-hub-notification
+      Handler: src.handlers.eventbridge.handler
+      CodeUri: .
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TodosTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref NotificationsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConnectionsTable
+        - SNSPublishMessagePolicy:
+            TopicName: "*"
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "mobiletargeting:SendMessages"
+                - "sns:Publish"
+              Resource: "*"
+
+  SchedulerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: personal-hub-scheduler-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: scheduler.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeLambda
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt NotificationFunction.Arn
+
   # DynamoDB
   ContentTable:
     Type: AWS::DynamoDB::Table
@@ -238,3 +288,6 @@ Outputs:
   ApiEndpoint:
     Description: API endpoint
     Value: !Sub https://${HubApi}.execute-api.${AWS::Region}.amazonaws.com
+  NotificationFunctionArn:
+    Description: Notification function ARN
+    Value: !GetAtt NotificationFunction.Arn
