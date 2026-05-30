@@ -3,5 +3,13 @@ version = 0.1
 [default.deploy.parameters]
 stack_name = "personal-hub-api"
 region = "ap-southeast-1"
-capabilities = "CAPABILITY_IAM"
+capabilities = "CAPABILITY_IAM CAPABILITY_NAMED_IAM"
 confirm_changeset = true
+resolve_s3 = true
+s3_prefix = "personal-hub-api"
+profile = "personal-hub"
+parameter_overrides = "NotifyPhoneNumber=\"/personal-hub/notify-phone-number\""
+image_repositories = []
+
+[default.global.parameters]
+region = "ap-southeast-1"
