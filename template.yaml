@@ -2,6 +2,11 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: Personal Hub API
 
+Parameters:
+  NotifyPhoneNumber:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /personal-hub/notify-phone-number
+
 Globals:
   Function:
     Runtime: python3.13
@@ -23,6 +28,9 @@ Resources:
     Type: AWS::Serverless::HttpApi
     Properties:
       StageName: $default
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 100
+        ThrottlingRateLimit: 50
       Auth:
         DefaultAuthorizer: CognitoAuthorizer
         Authorizers:
