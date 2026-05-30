@@ -183,6 +183,9 @@ Resources:
     Properties:
       FunctionName: personal-hub-notification
       Handler: src.handlers.eventbridge.handler
+      Environment:
+        Variables:
+          WEBSOCKET_ENDPOINT: !Sub https://${HubWebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/$default
       CodeUri: .
       Policies:
         - DynamoDBCrudPolicy:
@@ -219,6 +222,91 @@ Resources:
               - Effect: Allow
                 Action: lambda:InvokeFunction
                 Resource: !GetAtt NotificationFunction.Arn
+
+  # WebSocket Gateway
+  HubWebSocketApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: personal-hub-websocket
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: "$request.body.action"
+
+  ConnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HubWebSocketApi
+      RouteKey: $connect
+      AuthorizationType: NONE
+      Target: !Sub integrations/${ConnectIntegration}
+
+  DisconnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HubWebSocketApi
+      RouteKey: $disconnect
+      AuthorizationType: NONE
+      Target: !Sub integrations/${DisconnectIntegration}
+
+  DefaultRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HubWebSocketApi
+      RouteKey: $default
+      AuthorizationType: NONE
+      Target: !Sub integrations/${DefaultIntegration}
+
+  ConnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HubWebSocketApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketFunction.Arn}/invocations
+
+  DisconnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HubWebSocketApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketFunction.Arn}/invocations
+
+  DefaultIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HubWebSocketApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketFunction.Arn}/invocations
+
+  WebSocketStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref HubWebSocketApi
+      StageName: $default
+      AutoDeploy: true
+
+  WebSocketFunctionPermissionConnect:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WebSocketFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HubWebSocketApi}/*/*
+
+  WebSocketFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: python3.13
+    Properties:
+      FunctionName: personal-hub-websocket
+      Handler: src.handlers.websocket.handler
+      CodeUri: .
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConnectionsTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - execute-api:ManageConnections
+              Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HubWebSocketApi}/*
 
   # DynamoDB
   ContentTable:
@@ -288,6 +376,9 @@ Outputs:
   ApiEndpoint:
     Description: API endpoint
     Value: !Sub https://${HubApi}.execute-api.${AWS::Region}.amazonaws.com
+  WebSocketEndpoint:
+    Description: WebSocket endpoint
+    Value: !Sub wss://${HubWebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/$default
   NotificationFunctionArn:
     Description: Notification function ARN
     Value: !GetAtt NotificationFunction.Arn
