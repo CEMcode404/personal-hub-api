@@ -23,6 +23,41 @@ Resources:
     Type: AWS::Serverless::HttpApi
     Properties:
       StageName: $default
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            IdentitySource: $request.header.Authorization
+            JwtConfiguration:
+              issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPool}
+              audience:
+                - !Ref CognitoUserPoolClient
+
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: personal-hub-user-pool
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: personal-hub-client
+      UserPoolId: !Ref CognitoUserPool
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      GenerateSecret: false
 
   # Lambda Function
   ApiFunction:
@@ -63,12 +98,18 @@ Resources:
             ApiId: !Ref HubApi
             Path: /content
             Method: GET
+          Auth:
+            Authorizer: NONE
+
         GetContent:
           Type: HttpApi
           Properties:
             ApiId: !Ref HubApi
             Path: /content/{id}
             Method: GET
+            Auth:
+              Authorizer: NONE
+
         CreateContent:
           Type: HttpApi
           Properties:
@@ -231,12 +272,26 @@ Resources:
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: "$request.body.action"
 
+  WebSocketAuthorizer:
+    Type: AWS::ApiGatewayV2::Authorizer
+    Properties:
+      ApiId: !Ref HubWebSocketApi
+      AuthorizerType: JWT
+      IdentitySource:
+        - route.request.querystring.token
+      JwtConfiguration:
+        Issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPool}
+        Audience:
+          - !Ref CognitoUserPoolClient
+      Name: WebSocketAuthorizer
+
   ConnectRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
       ApiId: !Ref HubWebSocketApi
       RouteKey: $connect
-      AuthorizationType: NONE
+      AuthorizationType: JWT
+      AuthorizerId: !Ref WebSocketAuthorizer
       Target: !Sub integrations/${ConnectIntegration}
 
   DisconnectRoute:
@@ -382,3 +437,9 @@ Outputs:
   NotificationFunctionArn:
     Description: Notification function ARN
     Value: !GetAtt NotificationFunction.Arn
+  CognitoUserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref CognitoUserPool
+  CognitoClientId:
+    Description: Cognito Client ID
+    Value: !Ref CognitoUserPoolClient
