@@ -6,6 +6,9 @@ Parameters:
   NotifyPhoneNumber:
     Type: AWS::SSM::Parameter::Value<String>
     Default: /personal-hub/notify-phone-number
+  AllowedOrigin:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /personal-hub/allowed-origin
 
 Globals:
   Function:
@@ -21,6 +24,7 @@ Globals:
         CONNECTIONS_TABLE: ""
         NOTIFICATION_FUNCTION_ARN: ""
         SCHEDULER_ROLE_ARN: ""
+        ALLOWED_ORIGIN: ""
 
 Resources:
   # API Gateway
@@ -28,6 +32,18 @@ Resources:
     Type: AWS::Serverless::HttpApi
     Properties:
       StageName: $default
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref AllowedOrigin
+        AllowHeaders:
+          - Authorization
+          - Content-Type
+        AllowMethods:
+          - GET
+          - POST
+          - PATCH
+          - DELETE
+          - OPTIONS
       DefaultRouteSettings:
         ThrottlingBurstLimit: 100
         ThrottlingRateLimit: 50
@@ -79,6 +95,7 @@ Resources:
         Variables:
           NOTIFICATION_FUNCTION_ARN: !GetAtt NotificationFunction.Arn
           SCHEDULER_ROLE_ARN: !GetAtt SchedulerRole.Arn
+          ALLOWED_ORIGIN: !Ref AllowedOrigin
       CodeUri: .
       Policies:
         - DynamoDBCrudPolicy:

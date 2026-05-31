@@ -8,7 +8,7 @@ confirm_changeset = true
 resolve_s3 = true
 s3_prefix = "personal-hub-api"
 profile = "personal-hub"
-parameter_overrides = "NotifyPhoneNumber=\"/personal-hub/notify-phone-number\""
+parameter_overrides = "NotifyPhoneNumber=\"/personal-hub/notify-phone-number\" AllowedOrigin=\"/personal-hub/allowed-origin\""
 image_repositories = []
 
 [default.global.parameters]

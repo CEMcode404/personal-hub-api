@@ -6,7 +6,7 @@ from src.handlers.notification import router as notification
 import os
 
 cors_config = CORSConfig(
-    allow_origin="http://localhost:5173" if os.environ.get("APP_ENV") == "local" else "https://your-cloudfront-domain.com",
+    allow_origin=os.environ.get("ALLOWED_ORIGIN", "http://localhost:5173"),
     allow_headers=["Authorization", "Content-Type"],
     max_age=300,
 )
