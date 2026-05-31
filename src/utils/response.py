@@ -1,6 +1,8 @@
 import json
 from functools import wraps
 from aws_lambda_powertools.event_handler import Response
+import traceback
+
 
 def success(data, status_code=200):
     return Response(status_code=status_code, content_type="application/json", body=json.dumps(data))
@@ -16,5 +18,6 @@ def handle_errors(fn):
         except ValueError as e:
             return error(str(e), status_code=400)
         except Exception:
+            print(traceback.format_exc())
             return error("Internal server error", status_code=500)
     return wrapper
