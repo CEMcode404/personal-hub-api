@@ -53,6 +53,7 @@ This will:
 | `make reset`  | Stop all local services and wipe all data                  |
 | `make setup`  | Create DynamoDB tables (run once after first `make local`) |
 | `make reload` | Reload the page to reflect the new changes                 |
+| `make deploy` | Deploy to prod                                             |
 
 ## Deployment
 

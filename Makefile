@@ -1,4 +1,4 @@
-.PHONY: local stop reset setup reload
+.PHONY: local stop reset setup reload deploy
 
 setup:
 	AWS_ACCESS_KEY_ID=fake AWS_SECRET_ACCESS_KEY=fake aws dynamodb create-table \
@@ -55,3 +55,7 @@ stop:
 
 reset:
 	docker compose down -v
+
+deploy:
+	sam build
+	sam deploy
