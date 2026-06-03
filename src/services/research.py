@@ -19,7 +19,7 @@ def create(body: CreateResearchRequest):
         id=str(uuid.uuid4()),
         title=body.title,
         body=body.body,
-        status="in-progress",
+        status="draft",
         category=body.category,
         tags=body.tags,
         references=body.references,
