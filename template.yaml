@@ -61,6 +61,8 @@ Resources:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: personal-hub-user-pool
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
       Policies:
         PasswordPolicy:
           MinimumLength: 8
