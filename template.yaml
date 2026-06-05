@@ -45,8 +45,8 @@ Resources:
           - DELETE
           - OPTIONS
       DefaultRouteSettings:
-        ThrottlingBurstLimit: 100
-        ThrottlingRateLimit: 50
+        ThrottlingBurstLimit: 10 # Adjust when going to release for production. This config is for dev phase only.
+        ThrottlingRateLimit: 5
       Auth:
         DefaultAuthorizer: CognitoAuthorizer
         Authorizers:
