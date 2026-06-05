@@ -57,6 +57,13 @@ Resources:
               audience:
                 - !Ref CognitoUserPoolClient
 
+  ApiGatewayUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /personal-hub/api-gateway-url
+      Type: String
+      Value: !Sub https://${HubApi}.execute-api.${AWS::Region}.amazonaws.com
+
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
