@@ -12,10 +12,16 @@ cors_config = CORSConfig(
 )
 
 app = APIGatewayHttpResolver(enable_validation=True, cors=cors_config);
-app.include_router(content, prefix="/content")
-app.include_router(research, prefix="/research")
-app.include_router(todo, prefix="/todo")
-app.include_router(notification, prefix="/notifications")
+
+admin_routers = {
+    "/content":      content,
+    "/research":     research,
+    "/todo":         todo,
+    "/notifications": notification,
+}
+
+for path, router in admin_routers.items():
+    app.include_router(router, prefix=f"{path}")
 
 if os.environ.get("APP_ENV") == "local":
     @app.get("/docs")
