@@ -9,6 +9,9 @@ Parameters:
   AllowedOrigin:
     Type: AWS::SSM::Parameter::Value<String>
     Default: /personal-hub/allowed-origin
+  OriginSecret:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /personal-hub/origin-secret
 
 Globals:
   Function:
@@ -56,6 +59,14 @@ Resources:
               issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPool}
               audience:
                 - !Ref CognitoUserPoolClient
+          # CloudFront secret header authorizer
+          CloudFrontAuthorizer:
+            AuthorizerPayloadFormatVersion: "2.0"
+            EnableSimpleResponses: true
+            FunctionArn: !GetAtt CloudFrontAuthorizerFunction.Arn
+            Identity:
+              Headers:
+                - x-origin-secret
 
   ApiGatewayUrlParameter:
     Type: AWS::SSM::Parameter
@@ -91,6 +102,34 @@ Resources:
         - ALLOW_USER_SRP_AUTH
         - ALLOW_REFRESH_TOKEN_AUTH
       GenerateSecret: false
+
+  # CloudFront Origin Secret Authorizer
+  CloudFrontAuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: python3.13
+    Properties:
+      FunctionName: personal-hub-cloudfront-authorizer
+      Handler: src.handlers.authorizer.handler
+      CodeUri: .
+      Environment:
+        Variables:
+          ORIGIN_SECRET: !Ref OriginSecret
+          APP_ENV: ""
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/personal-hub/origin-secret
+
+  CloudFrontAuthorizerPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CloudFrontAuthorizerFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HubApi}/*
 
   # Lambda Function
   ApiFunction:
@@ -136,7 +175,10 @@ Resources:
             ApiId: !Ref HubApi
             Path: /content/health
             Method: GET
-        # Content endpoints
+            Auth:
+              Authorizer: CloudFrontAuthorizer # only checks secret header
+
+        # Content endpoints - public but requires CloudFront secret header
         ListContent:
           Type: HttpApi
           Properties:
@@ -144,7 +186,7 @@ Resources:
             Path: /content
             Method: GET
             Auth:
-              Authorizer: NONE
+              Authorizer: CloudFrontAuthorizer # only checks secret header, not Cognito
 
         GetContent:
           Type: HttpApi
@@ -153,7 +195,7 @@ Resources:
             Path: /content/{id}
             Method: GET
             Auth:
-              Authorizer: NONE
+              Authorizer: CloudFrontAuthorizer # only checks secret header, not Cognito
 
         CreateContent:
           Type: HttpApi
@@ -173,6 +215,7 @@ Resources:
             ApiId: !Ref HubApi
             Path: /content/{id}
             Method: DELETE
+
         # Docs endpoint
         Docs:
           Type: HttpApi
@@ -180,6 +223,7 @@ Resources:
             ApiId: !Ref HubApi
             Path: /docs
             Method: GET
+
         # Research endpoints
         ListResearch:
           Type: HttpApi
@@ -211,6 +255,7 @@ Resources:
             ApiId: !Ref HubApi
             Path: /research/{id}
             Method: DELETE
+
         # Todo endpoints
         ListTodos:
           Type: HttpApi
@@ -242,6 +287,7 @@ Resources:
             ApiId: !Ref HubApi
             Path: /todo/{id}
             Method: DELETE
+
         # Notification endpoints
         ListNotifications:
           Type: HttpApi
