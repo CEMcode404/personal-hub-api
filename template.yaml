@@ -64,6 +64,7 @@ Resources:
             AuthorizerPayloadFormatVersion: "2.0"
             EnableSimpleResponses: true
             FunctionArn: !GetAtt CloudFrontAuthorizerFunction.Arn
+            EnableFunctionDefaultPermissions: true
             Identity:
               Headers:
                 - x-origin-secret
@@ -122,14 +123,6 @@ Resources:
               Action:
                 - ssm:GetParameter
               Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/personal-hub/origin-secret
-
-  CloudFrontAuthorizerPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref CloudFrontAuthorizerFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HubApi}/*
 
   # Lambda Function
   ApiFunction:
