@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Personal Hub WAF - Must be deployed in us-east-1
+Description: Personal Hub WAF + Certificate - Must be deployed in us-east-1
 
 Parameters:
   OriginSecretValue:
@@ -60,7 +60,19 @@ Resources:
         CloudWatchMetricsEnabled: true
         MetricName: PersonalHubWAF
 
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: cmjrlabs.com
+      SubjectAlternativeNames:
+        - admin.cmjrlabs.com
+        - "*.cmjrlabs.com"
+      ValidationMethod: DNS
+
 Outputs:
   WafWebAclArn:
     Description: WAF Web ACL ARN to use in CloudFront
     Value: !GetAtt HubWafWebAcl.Arn
+  CertificateArn:
+    Description: ACM Certificate ARN for CloudFront
+    Value: !Ref Certificate
