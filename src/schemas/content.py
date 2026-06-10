@@ -6,21 +6,21 @@ from src.constants.content import ContentType, ContentStatus, ALLOWED_TAGS, ALLO
 
 
 class ContentValidatorMixin(BaseModel):
-    @field_validator("title", "excerpt", mode="before")
+    @field_validator("title", "excerpt", mode="before", check_fields=False)
     @classmethod
     def sanitize_plain(cls, v):
         if v is None:
             return v
         return nh3.clean(v, tags=set()).strip()
     
-    @field_validator("body", mode="before")
+    @field_validator("body", mode="before", check_fields=False)
     @classmethod
     def sanitize_body(cls, v):
         if v is None:
             return v
         return nh3.clean(v, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES)
     
-    @field_validator("tags", mode="before")
+    @field_validator("tags", mode="before", check_fields=False)
     @classmethod
     def validate_tags(cls, v):
         if v is None:
@@ -33,7 +33,7 @@ class ContentValidatorMixin(BaseModel):
                 raise ValueError(f"Tag '{tag}' contains invalid characters")
         return sanitized
 
-    @field_validator("cover_image", mode="before")
+    @field_validator("cover_image", mode="before", check_fields=False)
     @classmethod
     def validate_url(cls, v):
         if v and not re.match(r"^https?://", v):

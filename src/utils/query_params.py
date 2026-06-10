@@ -1,6 +1,6 @@
 import json
 
-def parse_int(value, default: int, min_val: int = 1, max_val: int = 100) -> int:
+def parse_int(value, default: int = 10, min_val: int = 1, max_val: int = 100) -> int:
     try:
         result = int(value)
         return max(min_val, min(max_val, result))  # clamps between min and max
