@@ -4,6 +4,13 @@ from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from src.constants.content import ContentType, ContentStatus, ALLOWED_TAGS, ALLOWED_ATTRIBUTES
 
+BODY_CLEANER = nh3.Cleaner(
+    tags=ALLOWED_TAGS,
+    attributes=ALLOWED_ATTRIBUTES,
+    url_schemes={"http", "https", "mailto"},
+    link_rel="noopener noreferrer",
+    filter_style_properties={"width", "text-align", "color", "background-color"},
+)
 
 class ContentValidatorMixin(BaseModel):
     @field_validator("title", "excerpt", mode="before", check_fields=False)
@@ -18,7 +25,7 @@ class ContentValidatorMixin(BaseModel):
     def sanitize_body(cls, v):
         if v is None:
             return v
-        return nh3.clean(v, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES)
+        return BODY_CLEANER.clean(v)
     
     @field_validator("tags", mode="before", check_fields=False)
     @classmethod
