@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional
+from src.constants.content import ContentType, ContentStatus
 
 @dataclass
 class Content:
@@ -7,8 +8,8 @@ class Content:
     title: str
     slug: str
     body: str
-    status: str
-    type: str
+    status: ContentStatus
+    type: ContentType
     created_at: str
     updated_at: str
     excerpt: Optional[str] = None

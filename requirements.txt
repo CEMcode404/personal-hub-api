@@ -4,6 +4,7 @@ boto3==1.43.14
 pydantic
 python-slugify
 python-dateutil
+nh3
 
 # Transitive dependencies (auto-installed)
 botocore==1.43.14
