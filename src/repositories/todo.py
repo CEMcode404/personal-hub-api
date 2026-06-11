@@ -20,13 +20,6 @@ def find_by_id(id: str):
     result = get_table(TABLE).get_item(Key={"id": id})
     return result.get("Item")
 
-def find_pending_notifications():
-    now = datetime.now(timezone.utc).isoformat()
-    result = get_table(TABLE).scan(
-        FilterExpression=Attr("notify").eq(True) & Attr("notify_at").lte(now) & Attr("status").eq("pending")
-    )
-    return result.get("Items", [])
-
 def save(item: Todo):
     data = {k: v for k, v in asdict(item).items() if v is not None}
     get_table(TABLE).put_item(Item=data)
