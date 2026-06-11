@@ -162,15 +162,6 @@ Resources:
               Resource: !GetAtt SchedulerRole.Arn
 
       Events:
-        HealthCheck:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref HubApi
-            Path: /content/health
-            Method: GET
-            Auth:
-              Authorizer: CloudFrontAuthorizer # only checks secret header
-
         # Content endpoints - public but requires CloudFront secret header
         ListContent:
           Type: HttpApi

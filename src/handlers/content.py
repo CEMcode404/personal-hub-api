@@ -8,10 +8,6 @@ from src.utils.query_params import parse_int, parse_cursor, parse_str
 
 router = Router()
 
-@router.get("/health")
-def health():
-    return {"status": "ok"}
-
 @router.get("")
 @handle_errors
 def list_content():
