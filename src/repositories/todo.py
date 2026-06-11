@@ -1,6 +1,4 @@
 from dataclasses import asdict
-from datetime import datetime, timezone
-from boto3.dynamodb.conditions import Attr
 from src.db import get_table
 from src.models.todo import Todo
 
