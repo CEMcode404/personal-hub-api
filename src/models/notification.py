@@ -1,12 +1,14 @@
 from dataclasses import dataclass
 from typing import Optional
+from src.constants.notification import NotificationStatus
+
 
 @dataclass
 class Notification:
     id: str
     title: str
     message: str
-    status: str        # unread, read
+    status: NotificationStatus
     todo_id: str
     created_at: str
-    ttl: Optional[int] = None  # Unix timestamp for DynamoDB TTL
+    ttl: Optional[int] = None
