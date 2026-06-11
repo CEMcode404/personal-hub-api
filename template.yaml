@@ -149,6 +149,8 @@ Resources:
             TableName: !Ref ConnectionsTable
         - DynamoDBCrudPolicy:
             TableName: !Ref NotificationsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref WikiTable
         - Statement:
             - Effect: Allow
               Action:
@@ -291,6 +293,38 @@ Resources:
             ApiId: !Ref HubApi
             Path: /notifications/{id}/read
             Method: PATCH
+
+        # Wiki endpoints
+        ListWiki:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /wiki
+            Method: GET
+        GetWiki:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /wiki/{id}
+            Method: GET
+        CreateWiki:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /wiki
+            Method: POST
+        UpdateWiki:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /wiki/{id}
+            Method: PATCH
+        DeleteWiki:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubApi
+            Path: /wiki/{id}
+            Method: DELETE
 
   NotificationFunction:
     Type: AWS::Serverless::Function
@@ -488,6 +522,18 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: personal-hub-todos
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  WikiTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: personal-hub-wiki
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: id

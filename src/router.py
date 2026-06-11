@@ -3,6 +3,7 @@ from src.handlers.content import router as content
 from src.handlers.research import router as research
 from src.handlers.todo import router as todo
 from src.handlers.notification import router as notification
+from src.handlers.wiki import router as wiki
 import os
 
 cors_config = CORSConfig(
@@ -18,6 +19,7 @@ admin_routers = {
     "/research":     research,
     "/todo":         todo,
     "/notifications": notification,
+    "/wiki":         wiki,
 }
 
 for path, router in admin_routers.items():
