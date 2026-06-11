@@ -15,4 +15,3 @@ class Research:
     tags: list[str] = field(default_factory=list)
     references: list[str] = field(default_factory=list)
     images: list[str] = field(default_factory=list)
-    published_at: Optional[str] = None

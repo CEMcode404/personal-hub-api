@@ -43,9 +43,6 @@ def update(id: str, body: UpdateResearchRequest):
     now = datetime.now(timezone.utc).isoformat()
     updates = {k: v for k, v in body.model_dump(mode="json").items() if v is not None}
 
-    if updates.get("status") == ResearchStatus.published.value:
-        updates["published_at"] = now
-
     updates["updated_at"] = now
     return research_repo.update(id, updates)
 
