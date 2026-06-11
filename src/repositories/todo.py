@@ -1,4 +1,6 @@
 from dataclasses import asdict
+from datetime import datetime, timezone
+from boto3.dynamodb.conditions import Attr
 from src.db import get_table
 from src.models.todo import Todo
 
@@ -19,8 +21,6 @@ def find_by_id(id: str):
     return result.get("Item")
 
 def find_pending_notifications():
-    from boto3.dynamodb.conditions import Attr
-    from datetime import datetime, timezone
     now = datetime.now(timezone.utc).isoformat()
     result = get_table(TABLE).scan(
         FilterExpression=Attr("notify").eq(True) & Attr("notify_at").lte(now) & Attr("status").eq("pending")
@@ -31,16 +31,18 @@ def save(item: Todo):
     data = {k: v for k, v in asdict(item).items() if v is not None}
     get_table(TABLE).put_item(Item=data)
 
-def update(id: str, updates: dict):
+def update(id: str, updates: dict) -> dict:
     expression = "SET " + ", ".join(f"#{k} = :{k}" for k in updates)
     attr_names = {f"#{k}": k for k in updates}
     attr_values = {f":{k}": v for k, v in updates.items()}
-    get_table(TABLE).update_item(
+    result = get_table(TABLE).update_item(
         Key={"id": id},
         UpdateExpression=expression,
         ExpressionAttributeNames=attr_names,
         ExpressionAttributeValues=attr_values,
+        ReturnValues="ALL_NEW"
     )
+    return result.get("Attributes")
 
 def delete(id: str):
     get_table(TABLE).delete_item(Key={"id": id})

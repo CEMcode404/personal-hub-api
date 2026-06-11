@@ -7,14 +7,15 @@ from src.repositories import todo as todo_repo
 from src.schemas.todo import CreateTodoRequest, UpdateTodoRequest
 from src.models.todo import Todo
 from src.services import notification as notification_service
+from src.constants.todo import TodoStatus, RecurrencePattern
 
 RECURRENCE_MAP = {
-    "daily": lambda dt: dt + timedelta(days=1),
-    "weekly": lambda dt: dt + timedelta(weeks=1),
-    "monthly": lambda dt: dt + relativedelta(months=1),
-    "quarterly": lambda dt: dt + relativedelta(months=3),
-    "semi-annual": lambda dt: dt + relativedelta(months=6),
-    "annual": lambda dt: dt + relativedelta(years=1),
+    RecurrencePattern.daily: lambda dt: dt + timedelta(days=1),
+    RecurrencePattern.weekly: lambda dt: dt + timedelta(weeks=1),
+    RecurrencePattern.monthly: lambda dt: dt + relativedelta(months=1),
+    RecurrencePattern.quarterly: lambda dt: dt + relativedelta(months=3),
+    RecurrencePattern.semi_annual: lambda dt: dt + relativedelta(months=6),
+    RecurrencePattern.annual: lambda dt: dt + relativedelta(years=1),
 }
 
 def list_all(limit: int = 10, cursor: dict = None):
@@ -32,7 +33,7 @@ def create(body: CreateTodoRequest):
         id=str(uuid.uuid4()),
         title=body.title,
         body=body.body,
-        status="pending",
+        status=TodoStatus.pending,
         is_recurring=body.is_recurring,
         recurrence=body.recurrence,
         notify=body.notify,
@@ -52,13 +53,19 @@ def update(id: str, body: UpdateTodoRequest):
     if not existing:
         raise ValueError("Todo not found")
     now = datetime.now(timezone.utc).isoformat()
-    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    updates = {k: v for k, v in body.model_dump(mode="json").items() if v is not None}
     updates["updated_at"] = now
-    if "notify_at" in updates and updates.get("notify", existing.get("notify")):
+
+    notify = updates.get("notify", existing.get("notify"))
+    notify_at = updates.get("notify_at", existing.get("notify_at"))
+
+    if not notify and existing.get("notify"):
         _delete_schedule(id)
-        _create_schedule(id, updates["notify_at"])
-    todo_repo.update(id, updates)
-    return {**existing, **updates}
+    elif notify and notify_at and (not existing.get("notify") or "notify_at" in updates):
+        _delete_schedule(id)
+        _create_schedule(id, notify_at)
+
+    return todo_repo.update(id, updates)
 
 def delete(id: str):
     existing = todo_repo.find_by_id(id)
@@ -71,14 +78,20 @@ def delete(id: str):
 def process_notification(todo_id: str):
     todo = todo_repo.find_by_id(todo_id)
     if not todo:
+        print(f"[WARN] Todo {todo_id} not found for notification processing")
         return
     notification_service.notify(todo)
     if todo.get("is_recurring") and todo.get("recurrence"):
         _reschedule(todo)
 
 def _reschedule(todo: dict):
+    try:
+        recurrence = RecurrencePattern(todo["recurrence"])
+    except ValueError:
+        print(f"[WARN] Unknown recurrence pattern '{todo['recurrence']}' for todo {todo['id']}, skipping reschedule")
+        return
     current_notify_at = datetime.fromisoformat(todo["notify_at"])
-    next_notify_at = RECURRENCE_MAP[todo["recurrence"]](current_notify_at)
+    next_notify_at = RECURRENCE_MAP[recurrence](current_notify_at)
     next_notify_at_str = next_notify_at.isoformat()
     todo_repo.update(todo["id"], {
         "notify_at": next_notify_at_str,
@@ -92,7 +105,7 @@ def _create_schedule(todo_id: str, notify_at: str):
         print(f"[LOCAL SCHEDULE] Create schedule for todo {todo_id} at {notify_at}")
         return
     scheduler = boto3.client("scheduler", region_name=os.environ.get("AWS_DEFAULT_REGION", "ap-southeast-1"))
-    dt = datetime.fromisoformat(notify_at)
+    dt = datetime.fromisoformat(notify_at).replace(tzinfo=None)
     scheduler.create_schedule(
         Name=f"todo-{todo_id}",
         ScheduleExpression=f"at({dt.strftime('%Y-%m-%dT%H:%M:%S')})",

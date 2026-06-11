@@ -1,10 +1,10 @@
-import json
 from typing import Annotated
 from aws_lambda_powertools.event_handler.api_gateway import Router
 from aws_lambda_powertools.event_handler.openapi.params import Body
 from src.services import todo as todo_service
 from src.schemas.todo import CreateTodoRequest, UpdateTodoRequest
 from src.utils.response import success, handle_errors
+from src.utils.query_params import parse_int, parse_cursor
 
 router = Router()
 
@@ -12,9 +12,8 @@ router = Router()
 @handle_errors
 def list_todos():
     params = router.current_event.query_string_parameters or {}
-    limit = int(params.get("limit", 10))
-    cursor_str = params.get("cursor")
-    cursor = json.loads(cursor_str) if cursor_str else None
+    limit = parse_int(params.get("limit"), default=10, min_val=1, max_val=100)
+    cursor = parse_cursor(params.get("cursor"))
     result = todo_service.list_all(limit=limit, cursor=cursor)
     return success(result)
 
@@ -32,8 +31,7 @@ def create_todo(body: Annotated[CreateTodoRequest, Body()]):
 @router.patch("/<id>")
 @handle_errors
 def update_todo(id: str, body: Annotated[UpdateTodoRequest, Body()]):
-    result = todo_service.update(id, body)
-    return success(result)
+    return success(todo_service.update(id, body))
 
 @router.delete("/<id>")
 @handle_errors

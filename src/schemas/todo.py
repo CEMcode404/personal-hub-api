@@ -1,11 +1,14 @@
-from pydantic import BaseModel, model_validator
+import re
+from pydantic import BaseModel, Field, model_validator
 from typing import Optional
+from src.constants.todo import TodoStatus, RecurrencePattern
+
 
 class CreateTodoRequest(BaseModel):
-    title: str
-    body: Optional[str] = None
+    title: str = Field(min_length=1, max_length=255)
+    body: Optional[str] = Field(default=None, max_length=2000)
     is_recurring: bool = False
-    recurrence: Optional[str] = None
+    recurrence: Optional[RecurrencePattern] = None
     notify: bool = False
     notify_at: Optional[str] = None
     notify_sms: bool = False
@@ -19,12 +22,13 @@ class CreateTodoRequest(BaseModel):
             raise ValueError("recurrence is required when is_recurring is enabled")
         return self
 
+
 class UpdateTodoRequest(BaseModel):
-    title: Optional[str] = None
-    body: Optional[str] = None
-    status: Optional[str] = None
+    title: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    body: Optional[str] = Field(default=None, max_length=2000)
+    status: Optional[TodoStatus] = None
     is_recurring: Optional[bool] = None
-    recurrence: Optional[str] = None
+    recurrence: Optional[RecurrencePattern] = None
     notify: Optional[bool] = None
     notify_at: Optional[str] = None
     notify_sms: Optional[bool] = None
