@@ -1,4 +1,3 @@
-import re
 from pydantic import BaseModel, Field, model_validator
 from typing import Optional
 from src.constants.todo import TodoStatus, RecurrencePattern
