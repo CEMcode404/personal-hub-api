@@ -9,7 +9,7 @@ TABLE = "personal-hub-wiki"
 
 def find_all(limit: int = 10, cursor: dict = None, tag: str = None, category: str = None):
     table = get_table(TABLE)
-    kwargs = {"Limit": limit, "ScanIndexForward": False}
+    kwargs = {"Limit": limit + 1, "ScanIndexForward": False}
 
     if cursor:
         kwargs["ExclusiveStartKey"] = cursor
@@ -26,13 +26,22 @@ def find_all(limit: int = 10, cursor: dict = None, tag: str = None, category: st
 
     result = table.query(**kwargs)
     items = result.get("Items", [])
-    for i in items:
-        print(f"title={i.get('title')} gsi_order_sk={i.get('gsi_order_sk')}")
-    last_key = result.get("LastEvaluatedKey")
+
+    has_more = len(items) > limit
+    page_items = items[:limit]
+
+    next_cursor = None
+    if has_more:
+        last_shown = items[limit - 1]
+        next_cursor = {"id": last_shown["id"], "gsi_order_sk": last_shown["gsi_order_sk"]}
+        if category:
+            next_cursor["category"] = last_shown["category"]
+        else:
+            next_cursor["gsi_constant"] = last_shown["gsi_constant"]
 
     return {
-        "items": items,
-        "next_cursor": json.dumps(last_key) if (last_key and len(items) == limit) else None,
+        "items": page_items,
+        "next_cursor": json.dumps(next_cursor) if next_cursor else None,
     }
 
 
