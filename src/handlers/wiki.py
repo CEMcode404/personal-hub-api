@@ -28,7 +28,7 @@ def get_wiki(id: str):
 @handle_errors
 def create_wiki(body: Annotated[CreateWikiRequest, Body()]):
     result = wiki_service.create(body)
-    return success(result.__dict__, status_code=201)
+    return success(result, status_code=201)
 
 @router.patch("/<id>")
 @handle_errors

@@ -1,43 +1,50 @@
+import json
 from dataclasses import asdict
-from boto3.dynamodb.conditions import Attr
+from boto3.dynamodb.conditions import Key, Attr
 from src.db import get_table
 from src.models.wiki import Wiki
 
 TABLE = "personal-hub-wiki"
 
+
 def find_all(limit: int = 10, cursor: dict = None, tag: str = None, category: str = None):
-    # NOTE: uses scan which reads the entire table — fine for personal use with small datasets.
-    # For scale, add a GSI on `category` for category filtering.
-    # For tag filtering at scale, consider OpenSearch since DynamoDB doesn't support GSI on list attributes.
-    kwargs = {"Limit": limit}
+    table = get_table(TABLE)
+    kwargs = {"Limit": limit, "ScanIndexForward": False}
+
     if cursor:
         kwargs["ExclusiveStartKey"] = cursor
 
-    filters = []
-    if tag:
-        filters.append(Attr("tags").contains(tag))
     if category:
-        filters.append(Attr("category").eq(category))
+        kwargs["IndexName"] = "gsi_by_category"
+        kwargs["KeyConditionExpression"] = Key("category").eq(category)
+    else:
+        kwargs["IndexName"] = "gsi_ordering"
+        kwargs["KeyConditionExpression"] = Key("gsi_constant").eq("WIKI")
 
-    if filters:
-        expression = filters[0]
-        for f in filters[1:]:
-            expression = expression & f
-        kwargs["FilterExpression"] = expression
+    if tag:
+        kwargs["FilterExpression"] = Attr("tags").contains(tag)
 
-    result = get_table(TABLE).scan(**kwargs)
+    result = table.query(**kwargs)
+    items = result.get("Items", [])
+    for i in items:
+        print(f"title={i.get('title')} gsi_order_sk={i.get('gsi_order_sk')}")
+    last_key = result.get("LastEvaluatedKey")
+
     return {
-        "items": result.get("Items", []),
-        "next_cursor": result.get("LastEvaluatedKey")
+        "items": items,
+        "next_cursor": json.dumps(last_key) if (last_key and len(items) == limit) else None,
     }
+
 
 def find_by_id(id: str):
     result = get_table(TABLE).get_item(Key={"id": id})
     return result.get("Item")
 
+
 def save(item: Wiki):
     data = {k: v for k, v in asdict(item).items() if v is not None}
     get_table(TABLE).put_item(Item=data)
+
 
 def update(id: str, updates: dict) -> dict:
     expression = "SET " + ", ".join(f"#{k} = :{k}" for k in updates)
@@ -48,9 +55,10 @@ def update(id: str, updates: dict) -> dict:
         UpdateExpression=expression,
         ExpressionAttributeNames=attr_names,
         ExpressionAttributeValues=attr_values,
-        ReturnValues="ALL_NEW"
+        ReturnValues="ALL_NEW",
     )
     return result.get("Attributes")
+
 
 def delete(id: str):
     get_table(TABLE).delete_item(Key={"id": id})
