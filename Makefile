@@ -10,10 +10,17 @@ setup:
 		--endpoint-url http://localhost:8000 > /dev/null 2>&1 || true
 	AWS_ACCESS_KEY_ID=fake AWS_SECRET_ACCESS_KEY=fake aws dynamodb create-table \
 		--table-name personal-hub-research \
-		--attribute-definitions AttributeName=id,AttributeType=S \
+		--attribute-definitions \
+			AttributeName=id,AttributeType=S \
+			AttributeName=gsi_constant,AttributeType=S \
+			AttributeName=updated_at,AttributeType=S \
+			AttributeName=category,AttributeType=S \
+			AttributeName=status,AttributeType=S \
 		--key-schema AttributeName=id,KeyType=HASH \
+		--global-secondary-indexes \
+			'[{"IndexName":"gsi_ordering","KeySchema":[{"AttributeName":"gsi_constant","KeyType":"HASH"},{"AttributeName":"updated_at","KeyType":"RANGE"}],"Projection":{"ProjectionType":"INCLUDE","NonKeyAttributes":["title","category","status","tags"]}},{"IndexName":"gsi_by_category","KeySchema":[{"AttributeName":"category","KeyType":"HASH"},{"AttributeName":"updated_at","KeyType":"RANGE"}],"Projection":{"ProjectionType":"INCLUDE","NonKeyAttributes":["title","status","tags"]}},{"IndexName":"gsi_by_status","KeySchema":[{"AttributeName":"status","KeyType":"HASH"},{"AttributeName":"updated_at","KeyType":"RANGE"}],"Projection":{"ProjectionType":"INCLUDE","NonKeyAttributes":["title","category","tags"]}}]' \
 		--billing-mode PAY_PER_REQUEST \
-		--region us-east-1 \
+		--region ap-southeast-1 \
 		--endpoint-url http://localhost:8000 > /dev/null 2>&1 || true
 	AWS_ACCESS_KEY_ID=fake AWS_SECRET_ACCESS_KEY=fake aws dynamodb create-table \
 		--table-name personal-hub-todos \

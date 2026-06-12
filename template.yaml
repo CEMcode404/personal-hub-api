@@ -514,9 +514,55 @@ Resources:
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
+        - AttributeName: gsi_constant
+          AttributeType: S
+        - AttributeName: updated_at
+          AttributeType: S
+        - AttributeName: category
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: gsi_ordering
+          KeySchema:
+            - AttributeName: gsi_constant
+              KeyType: HASH
+            - AttributeName: updated_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - title
+              - category
+              - status
+              - tags
+        - IndexName: gsi_by_category
+          KeySchema:
+            - AttributeName: category
+              KeyType: HASH
+            - AttributeName: updated_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - title
+              - status
+              - tags
+        - IndexName: gsi_by_status
+          KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+            - AttributeName: updated_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - title
+              - category
+              - tags
 
   TodosTable:
     Type: AWS::DynamoDB::Table

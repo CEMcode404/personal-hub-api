@@ -3,12 +3,12 @@ from datetime import datetime, timezone
 from src.repositories import wiki as wiki_repo
 from src.schemas.wiki import CreateWikiRequest, UpdateWikiRequest
 from src.models.wiki import Wiki
+from src.utils.common import clean_internal_fields
 
 _INTERNAL_FIELDS = {"gsi_constant", "gsi_order_sk"}
 
-
 def _clean(item: dict) -> dict:
-    return {k: v for k, v in item.items() if k not in _INTERNAL_FIELDS}
+    return clean_internal_fields(item, _INTERNAL_FIELDS)
 
 
 def _compute_order_sk(is_pinned: bool, updated_at: str) -> str:

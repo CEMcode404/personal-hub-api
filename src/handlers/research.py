@@ -4,7 +4,7 @@ from aws_lambda_powertools.event_handler.openapi.params import Body
 from src.services import research as research_service
 from src.schemas.research import CreateResearchRequest, UpdateResearchRequest
 from src.utils.response import success, handle_errors
-from src.utils.query_params import parse_int, parse_cursor
+from src.utils.query_params import parse_int, parse_cursor, parse_str
 
 router = Router()
 
@@ -14,7 +14,9 @@ def list_research():
     params = router.current_event.query_string_parameters or {}
     limit = parse_int(params.get("limit"), default=10, min_val=1, max_val=100)
     cursor = parse_cursor(params.get("cursor"))
-    result = research_service.list_all(limit=limit, cursor=cursor)
+    category = parse_str(params.get("category"))
+    status = parse_str(params.get("status"))
+    result = research_service.list_all(limit=limit, cursor=cursor, category=category, status=status)
     return success(result)
 
 @router.get("/<id>")
@@ -26,7 +28,7 @@ def get_research(id: str):
 @handle_errors
 def create_research(body: Annotated[CreateResearchRequest, Body()]):
     result = research_service.create(body)
-    return success(result.__dict__, status_code=201)
+    return success(result, status_code=201)
 
 @router.patch("/<id>")
 @handle_errors
