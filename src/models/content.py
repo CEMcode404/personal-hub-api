@@ -16,3 +16,7 @@ class Content:
     tags: list = field(default_factory=list)
     cover_image: Optional[str] = None
     published_at: Optional[str] = None
+    # GSI: gsi_ordering — all content, latest-edited first
+    gsi_constant: str = "CONTENT"
+    # GSI: gsi_by_status — published_at if published, else updated_at
+    gsi_status_sk: Optional[str] = None

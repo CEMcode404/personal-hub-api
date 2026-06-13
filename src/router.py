@@ -1,5 +1,6 @@
 from aws_lambda_powertools.event_handler import APIGatewayHttpResolver, CORSConfig
-from src.handlers.content import router as content
+from src.handlers.content import router as content_public
+from src.handlers.admin.content import router as content
 from src.handlers.research import router as research
 from src.handlers.todo import router as todo
 from src.handlers.notification import router as notification
@@ -14,13 +15,20 @@ cors_config = CORSConfig(
 
 app = APIGatewayHttpResolver(enable_validation=True, cors=cors_config);
 
-admin_routers = {
-    "/content":      content,
-    "/research":     research,
-    "/todo":         todo,
-    "/notifications": notification,
-    "/wiki":         wiki,
+public_routers = {
+    "/content": content_public,
 }
+
+admin_routers = {
+    "/admin/content": content,
+    "/research":      research,
+    "/todo":          todo,
+    "/notifications": notification,
+    "/wiki":          wiki,
+}
+
+for path, router in public_routers.items():
+    app.include_router(router, prefix=f"{path}")
 
 for path, router in admin_routers.items():
     app.include_router(router, prefix=f"{path}")
