@@ -37,6 +37,11 @@ setup:
 		--billing-mode PAY_PER_REQUEST \
 		--region us-east-1 \
 		--endpoint-url http://localhost:8000 > /dev/null 2>&1 || true
+	AWS_ACCESS_KEY_ID=fake AWS_SECRET_ACCESS_KEY=fake aws dynamodb update-time-to-live \
+		--table-name personal-hub-todos \
+		--time-to-live-specification "Enabled=true,AttributeName=ttl" \
+		--region us-east-1 \
+		--endpoint-url http://localhost:8000 > /dev/null 2>&1 || true
 	AWS_ACCESS_KEY_ID=fake AWS_SECRET_ACCESS_KEY=fake aws dynamodb create-table \
 		--table-name personal-hub-connections \
 		--attribute-definitions AttributeName=connectionId,AttributeType=S \

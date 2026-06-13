@@ -1,11 +1,15 @@
 from dataclasses import asdict
+from boto3.dynamodb.conditions import Attr
 from src.db import get_table
 from src.models.todo import Todo
 
 TABLE = "personal-hub-todos"
 
 def find_all(limit: int = 10, cursor: dict = None):
-    kwargs = {"Limit": limit}
+    kwargs = {
+        "Limit": limit,
+        "FilterExpression": ~(Attr("is_recurring").eq(True) & Attr("recurring_parent_id").not_exists()),
+    }
     if cursor:
         kwargs["ExclusiveStartKey"] = cursor
     result = get_table(TABLE).scan(**kwargs)

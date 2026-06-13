@@ -638,6 +638,9 @@ Resources:
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
 
   WikiTable:
     Type: AWS::DynamoDB::Table

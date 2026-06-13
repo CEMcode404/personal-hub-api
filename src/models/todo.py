@@ -17,3 +17,6 @@ class Todo:
     body: Optional[str] = None
     recurrence: Optional[RecurrencePattern] = None
     notify_at: Optional[str] = None
+    next_occurrence_at: Optional[str] = None
+    recurring_parent_id: Optional[str] = None
+    ttl: Optional[int] = None

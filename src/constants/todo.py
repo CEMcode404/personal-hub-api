@@ -12,3 +12,7 @@ class RecurrencePattern(str, Enum):
     quarterly = "quarterly"
     semi_annual = "semi-annual"
     annual = "annual"
+
+class ScheduleAction(str, Enum):
+    notify = "notify"
+    recur = "recur"
