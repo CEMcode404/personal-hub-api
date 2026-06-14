@@ -146,6 +146,8 @@ def delete(id: str):
     if not existing:
         raise ValueError("Todo not found")
     if existing.get("recurring_parent_id") in (TodoParent.standalone.value, TodoParent.template.value):
+        if existing.get("recurring_parent_id") == TodoParent.template.value and todo_repo.has_children(id):
+            raise ValueError("Cannot delete a recurring item with history. Remove its history first.")
         if existing.get("notify"):
             _delete_schedule(ScheduleAction.notify.value, id)
         if existing.get("is_recurring"):
