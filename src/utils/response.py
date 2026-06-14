@@ -17,7 +17,9 @@ def handle_errors(fn):
         try:
             return fn(*args, **kwargs)
         except ValidationError as e:
-            return error(e.errors(), status_code=422)
+            first = e.errors()[0]
+            msg = first["msg"].removeprefix("Value error, ")
+            return error(msg, status_code=422)
         except ValueError as e:
             return error(str(e), status_code=400)
         except Exception:

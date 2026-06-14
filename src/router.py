@@ -1,11 +1,14 @@
-from aws_lambda_powertools.event_handler import APIGatewayHttpResolver, CORSConfig
+from aws_lambda_powertools.event_handler import APIGatewayHttpResolver, CORSConfig, Response
 from src.handlers.content import router as content_public
 from src.handlers.admin.content import router as content
 from src.handlers.research import router as research
 from src.handlers.todo import router as todo
 from src.handlers.notification import router as notification
 from src.handlers.wiki import router as wiki
+from aws_lambda_powertools.event_handler.openapi.exceptions import RequestValidationError
+import traceback
 import os
+import json
 
 cors_config = CORSConfig(
     allow_origin=os.environ.get("ALLOWED_ORIGIN", "http://localhost:5173"),
@@ -37,3 +40,22 @@ if os.environ.get("APP_ENV") == "local":
     @app.get("/docs")
     def docs():
         return app.get_openapi_json_schema(title="Personal Hub API", version="1.0.0")
+    
+@app.exception_handler(RequestValidationError)
+def handle_validation_error(exc: RequestValidationError):
+    errors = exc.errors()
+    message = errors[0]["msg"].removeprefix("Value error, ") if errors else "Validation failed"
+    return Response(
+        status_code=422,
+        content_type="application/json",
+        body=json.dumps({"message": message}),
+    )
+
+@app.exception_handler(Exception)
+def handle_unexpected_error(exc: Exception):
+    print(traceback.format_exc())
+    return Response(
+        status_code=500,
+        content_type="application/json",
+        body=json.dumps({"message": "Internal server error"}),
+    )
