@@ -48,6 +48,14 @@ def find_by_id(id: str):
     result = get_table(TABLE).get_item(Key={"id": id})
     return result.get("Item")
 
+def has_children(id: str) -> bool:
+    result = get_table(TABLE).query(
+        IndexName="gsi_by_parent",
+        KeyConditionExpression=Key("recurring_parent_id").eq(id),
+        Limit=1,
+    )
+    return len(result.get("Items", [])) > 0
+
 
 def save(item: Todo):
     data = {k: v for k, v in asdict(item).items() if v is not None}

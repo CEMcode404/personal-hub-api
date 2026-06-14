@@ -128,9 +128,11 @@ def update(id: str, body: UpdateTodoRequest):
         _delete_schedule(ScheduleAction.recur.value, id)
         _create_schedule(ScheduleAction.recur.value, id, next_occurrence_at)
 
-    # Keep recurring_parent_id sentinel in sync with is_recurring (standalone <-> template)
     if "is_recurring" in updates:
-        updates["recurring_parent_id"] = TodoParent.template.value if is_recurring else TodoParent.standalone.value
+        if is_recurring:
+            updates["recurring_parent_id"] = TodoParent.template.value
+        elif existing.get("recurring_parent_id") == TodoParent.template.value and not todo_repo.has_children(id):
+            updates["recurring_parent_id"] = TodoParent.standalone.value
 
     status = updates.get("status", existing.get("status"))
     updates["gsi_order_sk"] = _compute_order_sk(status, now)
