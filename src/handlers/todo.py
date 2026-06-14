@@ -3,8 +3,9 @@ from aws_lambda_powertools.event_handler.api_gateway import Router
 from aws_lambda_powertools.event_handler.openapi.params import Body
 from src.services import todo as todo_service
 from src.schemas.todo import CreateTodoRequest, UpdateTodoRequest
+from src.constants.todo import TodoParent
 from src.utils.response import success, handle_errors
-from src.utils.query_params import parse_int, parse_cursor
+from src.utils.query_params import parse_int, parse_cursor, parse_str
 
 router = Router()
 
@@ -14,7 +15,9 @@ def list_todos():
     params = router.current_event.query_string_parameters or {}
     limit = parse_int(params.get("limit"), default=10, min_val=1, max_val=100)
     cursor = parse_cursor(params.get("cursor"))
-    result = todo_service.list_all(limit=limit, cursor=cursor)
+    parent = parse_str(params.get("parent")) or TodoParent.standalone.value
+    status = parse_str(params.get("status"))
+    result = todo_service.list_all(limit=limit, cursor=cursor, parent=parent, status=status)
     return success(result)
 
 @router.get("/<id>")
@@ -26,7 +29,7 @@ def get_todo(id: str):
 @handle_errors
 def create_todo(body: Annotated[CreateTodoRequest, Body()]):
     result = todo_service.create(body)
-    return success(result.__dict__, status_code=201)
+    return success(result, status_code=201)
 
 @router.patch("/<id>")
 @handle_errors

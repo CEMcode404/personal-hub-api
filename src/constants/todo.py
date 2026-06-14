@@ -16,3 +16,7 @@ class RecurrencePattern(str, Enum):
 class ScheduleAction(str, Enum):
     notify = "notify"
     recur = "recur"
+
+class TodoParent(str, Enum):
+    standalone = "standalone"
+    template = "template"

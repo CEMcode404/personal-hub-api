@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
-from src.constants.todo import TodoStatus, RecurrencePattern
+from src.constants.todo import TodoStatus, RecurrencePattern, TodoParent
 
 
 @dataclass
@@ -18,5 +18,6 @@ class Todo:
     recurrence: Optional[RecurrencePattern] = None
     notify_at: Optional[str] = None
     next_occurrence_at: Optional[str] = None
-    recurring_parent_id: Optional[str] = None
+    recurring_parent_id: str = TodoParent.standalone.value
+    gsi_order_sk: Optional[str] = None
     ttl: Optional[int] = None

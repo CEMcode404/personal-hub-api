@@ -7,7 +7,9 @@ from dateutil.relativedelta import relativedelta
 from src.repositories import todo as todo_repo
 from src.schemas.todo import CreateTodoRequest, UpdateTodoRequest
 from src.models.todo import Todo
-from src.constants.todo import TodoStatus, RecurrencePattern, ScheduleAction
+from src.constants.todo import TodoStatus, RecurrencePattern, ScheduleAction, TodoParent
+from src.utils.common import clean_internal_fields
+
 
 # Note: monthly/quarterly/semi_annual/annual recurrences chain off the previous
 # occurrence date, so day-of-month may drift downward (toward 28) when passing
@@ -22,10 +24,11 @@ RECURRENCE_MAP = {
     RecurrencePattern.annual: lambda dt: dt + relativedelta(years=1),
 }
 
+_INTERNAL_FIELDS = {"gsi_order_sk"}
+
 _CHILD_EDITABLE_FIELDS = {"title", "body", "status"}
 
 _scheduler_client = None
-
 
 def _get_scheduler_client():
     global _scheduler_client
@@ -36,17 +39,31 @@ def _get_scheduler_client():
     return _scheduler_client
 
 
-def list_all(limit: int = 10, cursor: dict = None):
-    return todo_repo.find_all(limit=limit, cursor=cursor)
+def _clean(item: dict) -> dict:
+    return clean_internal_fields(item, _INTERNAL_FIELDS)
+
+
+def _compute_order_sk(status: str, updated_at: str) -> str:
+    prefix = "0" if status == TodoStatus.pending.value else "1"
+    return f"{prefix}#{updated_at}"
+
+
+def list_all(limit: int = 10, cursor: dict = None, parent: str = TodoParent.standalone.value, status: str = None):
+    result = todo_repo.find_all(limit=limit, cursor=cursor, parent=parent, status=status)
+    return {
+        "items": [_clean(item) for item in result["items"]],
+        "next_cursor": result["next_cursor"],
+    }
 
 def get_by_id(id: str):
     item = todo_repo.find_by_id(id)
     if not item:
         raise ValueError("Todo not found")
-    return item
+    return _clean(item)
 
 def create(body: CreateTodoRequest):
     now = datetime.now(timezone.utc).isoformat()
+    recurring_parent_id = TodoParent.template.value if body.is_recurring else TodoParent.standalone.value
     item = Todo(
         id=str(uuid.uuid4()),
         title=body.title,
@@ -61,13 +78,16 @@ def create(body: CreateTodoRequest):
         notify_web=body.notify_web,
         created_at=now,
         updated_at=now,
+        recurring_parent_id=recurring_parent_id,
+        gsi_order_sk=_compute_order_sk(TodoStatus.pending.value, now),
     )
     todo_repo.save(item)
     if body.notify and body.notify_at:
         _create_schedule(ScheduleAction.notify.value, item.id, body.notify_at)
     if body.is_recurring and body.next_occurrence_at:
         _create_schedule(ScheduleAction.recur.value, item.id, body.next_occurrence_at)
-    return item
+    return _clean(item.__dict__)
+
 
 def update(id: str, body: UpdateTodoRequest):
     existing = todo_repo.find_by_id(id)
@@ -77,10 +97,13 @@ def update(id: str, body: UpdateTodoRequest):
     updates = {k: v for k, v in body.model_dump(mode="json").items() if v is not None}
     updates["updated_at"] = now
 
-    if existing.get("recurring_parent_id"):
+    if existing.get("recurring_parent_id") not in (TodoParent.standalone.value, TodoParent.template.value):
         # Child record: only title/body/status are editable, scheduler untouched
         updates = {k: v for k, v in updates.items() if k in _CHILD_EDITABLE_FIELDS}
-        return todo_repo.update(id, updates)
+        status = updates.get("status", existing.get("status"))
+        updates["gsi_order_sk"] = _compute_order_sk(status, now)
+        return _clean(todo_repo.update(id, updates))
+
 
     # Notification schedule (independent of recurrence)
     notify = updates.get("notify", existing.get("notify"))
@@ -100,13 +123,21 @@ def update(id: str, body: UpdateTodoRequest):
         _delete_schedule(ScheduleAction.recur.value, id)
         _create_schedule(ScheduleAction.recur.value, id, next_occurrence_at)
 
-    return todo_repo.update(id, updates)
+    # Keep recurring_parent_id sentinel in sync with is_recurring (standalone <-> template)
+    if "is_recurring" in updates:
+        updates["recurring_parent_id"] = TodoParent.template.value if is_recurring else TodoParent.standalone.value
+
+    status = updates.get("status", existing.get("status"))
+    updates["gsi_order_sk"] = _compute_order_sk(status, now)
+
+    return _clean(todo_repo.update(id, updates))
+
 
 def delete(id: str):
     existing = todo_repo.find_by_id(id)
     if not existing:
         raise ValueError("Todo not found")
-    if not existing.get("recurring_parent_id"):
+    if existing.get("recurring_parent_id") in (TodoParent.standalone.value, TodoParent.template.value):
         if existing.get("notify"):
             _delete_schedule(ScheduleAction.notify.value, id)
         if existing.get("is_recurring"):
@@ -129,6 +160,7 @@ def handle_recurrence(todo: dict):
     snapshot_data["created_at"] = now
     snapshot_data["updated_at"] = now
     snapshot_data["ttl"] = None
+    snapshot_data["gsi_order_sk"] = _compute_order_sk(todo["status"], now)
     todo_repo.save(Todo(**snapshot_data))
 
     # Reset template: advance next_occurrence_at, back to pending
@@ -137,6 +169,7 @@ def handle_recurrence(todo: dict):
         "status": TodoStatus.pending.value,
         "next_occurrence_at": next_occ.isoformat(),
         "updated_at": now,
+        "gsi_order_sk": _compute_order_sk(TodoStatus.pending.value, now),
     }
 
     # Advance notify_at by the same interval, only if notify was set
