@@ -159,27 +159,36 @@ def handle_recurrence(todo: dict):
         print(f"[WARN] Invalid recurrence for todo {todo['id']}, skipping recurrence")
         return
 
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(timezone.utc)
+    current_next_occ = datetime.fromisoformat(todo["next_occurrence_at"])
+
+    # If next_occurrence_at is already in the future, a previous (retried) invocation
+    # already advanced this template - skip to avoid duplicate snapshots/reschedules.
+    if current_next_occ > now:
+        print(f"[INFO] Todo {todo['id']} already advanced to {todo['next_occurrence_at']}, skipping (retry)")
+        return
+
+    now_iso = now.isoformat()
 
     # Snapshot current state into a new history record
     snapshot_data = {**todo}
     snapshot_data["id"] = str(uuid.uuid4())
     snapshot_data["recurring_parent_id"] = todo["id"]
-    snapshot_data["created_at"] = now
-    snapshot_data["updated_at"] = now
+    snapshot_data["created_at"] = now_iso
+    snapshot_data["updated_at"] = now_iso
     snapshot_data["ttl"] = None
-    snapshot_data["gsi_order_sk"] = _compute_order_sk(todo["status"], now)
-    snapshot_data["status_sk"] = _compute_status_sk(todo["status"], now)
+    snapshot_data["gsi_order_sk"] = _compute_order_sk(todo["status"], now_iso)
+    snapshot_data["status_sk"] = _compute_status_sk(todo["status"], now_iso)
     todo_repo.save(Todo(**snapshot_data))
 
     # Reset template: advance next_occurrence_at, back to pending
-    next_occ = RECURRENCE_MAP[recurrence](datetime.fromisoformat(todo["next_occurrence_at"]))
+    next_occ = RECURRENCE_MAP[recurrence](current_next_occ)
     updates = {
         "status": TodoStatus.pending.value,
         "next_occurrence_at": next_occ.isoformat(),
-        "updated_at": now,
-        "gsi_order_sk": _compute_order_sk(TodoStatus.pending.value, now),
-        "status_sk": _compute_status_sk(TodoStatus.pending.value, now),
+        "updated_at": now_iso,
+        "gsi_order_sk": _compute_order_sk(TodoStatus.pending.value, now_iso),
+        "status_sk": _compute_status_sk(TodoStatus.pending.value, now_iso),
     }
 
     # Advance notify_at by the same interval, only if notify was set
@@ -207,7 +216,7 @@ def _create_schedule(action: str, todo_id: str, at: str):
         return
     scheduler = _get_scheduler_client()
     dt = datetime.fromisoformat(at).replace(tzinfo=None)
-    scheduler.create_schedule(
+    kwargs = dict(
         Name=_schedule_name(action, todo_id),
         ScheduleExpression=f"at({dt.strftime('%Y-%m-%dT%H:%M:%S')})",
         ScheduleExpressionTimezone="UTC",
@@ -219,6 +228,12 @@ def _create_schedule(action: str, todo_id: str, at: str):
         FlexibleTimeWindow={"Mode": "OFF"},
         ActionAfterCompletion="DELETE"
     )
+    try:
+        scheduler.create_schedule(**kwargs)
+    except scheduler.exceptions.ConflictException:
+        # Schedule with this name already exists (e.g. retry after partial failure) - replace it
+        scheduler.delete_schedule(Name=_schedule_name(action, todo_id))
+        scheduler.create_schedule(**kwargs)
 
 def _delete_schedule(action: str, todo_id: str):
     if os.environ.get("APP_ENV") == "local":
