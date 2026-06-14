@@ -1,6 +1,7 @@
+import json
 from dataclasses import asdict
 from datetime import datetime, timezone, timedelta
-from boto3.dynamodb.conditions import Attr
+from boto3.dynamodb.conditions import Key
 from src.db import get_table
 from src.models.notification import Notification
 from src.constants.notification import NotificationStatus
@@ -8,20 +9,49 @@ from src.constants.notification import NotificationStatus
 TABLE = "personal-hub-notifications"
 
 def find_all(limit: int = 10, cursor: dict = None):
-    kwargs = {"Limit": limit}
+    kwargs = {"Limit": limit + 1}
     if cursor:
         kwargs["ExclusiveStartKey"] = cursor
     result = get_table(TABLE).scan(**kwargs)
+    items = result.get("Items", [])
+
+    has_more = len(items) > limit
+    page_items = items[:limit]
+
+    next_cursor = None
+    if has_more:
+        last = page_items[-1]
+        next_cursor = {"id": last["id"]}
+
     return {
-        "items": result.get("Items", []),
-        "next_cursor": result.get("LastEvaluatedKey")
+        "items": page_items,
+        "next_cursor": json.dumps(next_cursor) if next_cursor else None,
     }
 
-def find_unread():
-    result = get_table(TABLE).scan(
-        FilterExpression=Attr("status").eq(NotificationStatus.unread.value)
-    )
-    return result.get("Items", [])
+def find_unread(limit: int = 10, cursor: dict = None):
+    kwargs = {
+        "IndexName": "gsi_by_status",
+        "KeyConditionExpression": Key("status").eq(NotificationStatus.unread.value),
+        "Limit": limit + 1,
+        "ScanIndexForward": False,
+    }
+    if cursor:
+        kwargs["ExclusiveStartKey"] = cursor
+    result = get_table(TABLE).query(**kwargs)
+    items = result.get("Items", [])
+
+    has_more = len(items) > limit
+    page_items = items[:limit]
+
+    next_cursor = None
+    if has_more:
+        last = page_items[-1]
+        next_cursor = {"id": last["id"], "status": last["status"], "created_at": last["created_at"]}
+
+    return {
+        "items": page_items,
+        "next_cursor": json.dumps(next_cursor) if next_cursor else None,
+    }
 
 def save(item: Notification):
     data = {k: v for k, v in asdict(item).items() if v is not None}

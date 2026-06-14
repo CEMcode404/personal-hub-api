@@ -17,8 +17,11 @@ def list_notifications():
 @router.get("/unread")
 @handle_errors
 def list_unread():
-    result = notification_repo.find_unread()
-    return success({"items": result})
+    params = router.current_event.query_string_parameters or {}
+    limit = parse_int(params.get("limit"), default=10, min_val=1, max_val=100)
+    cursor = parse_cursor(params.get("cursor"))
+    result = notification_repo.find_unread(limit=limit, cursor=cursor)
+    return success(result)
 
 @router.patch("/<id>/read")
 @handle_errors

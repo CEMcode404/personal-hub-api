@@ -57,9 +57,19 @@ setup:
 		--endpoint-url http://localhost:8000 > /dev/null 2>&1 || true
 	AWS_ACCESS_KEY_ID=fake AWS_SECRET_ACCESS_KEY=fake aws dynamodb create-table \
 		--table-name personal-hub-notifications \
-		--attribute-definitions AttributeName=id,AttributeType=S \
+		--attribute-definitions \
+			AttributeName=id,AttributeType=S \
+			AttributeName=status,AttributeType=S \
+			AttributeName=created_at,AttributeType=S \
 		--key-schema AttributeName=id,KeyType=HASH \
+		--global-secondary-indexes \
+			'[{"IndexName":"gsi_by_status","KeySchema":[{"AttributeName":"status","KeyType":"HASH"},{"AttributeName":"created_at","KeyType":"RANGE"}],"Projection":{"ProjectionType":"ALL"}}]' \
 		--billing-mode PAY_PER_REQUEST \
+		--region us-east-1 \
+		--endpoint-url http://localhost:8000 > /dev/null 2>&1 || true
+	AWS_ACCESS_KEY_ID=fake AWS_SECRET_ACCESS_KEY=fake aws dynamodb update-time-to-live \
+		--table-name personal-hub-notifications \
+		--time-to-live-specification "Enabled=true,AttributeName=ttl" \
 		--region us-east-1 \
 		--endpoint-url http://localhost:8000 > /dev/null 2>&1 || true
 	AWS_ACCESS_KEY_ID=fake AWS_SECRET_ACCESS_KEY=fake aws dynamodb create-table \
