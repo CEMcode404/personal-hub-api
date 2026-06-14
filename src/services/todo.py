@@ -44,7 +44,7 @@ def _clean(item: dict) -> dict:
 
 
 def _compute_order_sk(status: str, updated_at: str) -> str:
-    prefix = "0" if status == TodoStatus.pending.value else "1"
+    prefix = "1" if status == TodoStatus.pending.value else "0"
     return f"{prefix}#{updated_at}"
 
 
