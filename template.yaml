@@ -80,6 +80,9 @@ Resources:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: personal-hub-user-pool
+      MfaConfiguration: "ON"
+      EnabledMfas:
+        - SOFTWARE_TOKEN_MFA
       AdminCreateUserConfig:
         AllowAdminCreateUserOnly: true
       Policies:
@@ -101,6 +104,7 @@ Resources:
       UserPoolId: !Ref CognitoUserPool
       ExplicitAuthFlows:
         - ALLOW_USER_SRP_AUTH
+        - ALLOW_ADMIN_USER_PASSWORD_AUTH
         - ALLOW_REFRESH_TOKEN_AUTH
       GenerateSecret: false
 
