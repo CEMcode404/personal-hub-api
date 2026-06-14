@@ -44,7 +44,13 @@ if os.environ.get("APP_ENV") == "local":
 @app.exception_handler(RequestValidationError)
 def handle_validation_error(exc: RequestValidationError):
     errors = exc.errors()
-    message = errors[0]["msg"].removeprefix("Value error, ") if errors else "Validation failed"
+    if errors:
+        first = errors[0]
+        field = first["loc"][-1] if len(first["loc"]) > 1 else None
+        msg = first["msg"].removeprefix("Value error, ")
+        message = f"{field}: {msg}" if field else msg
+    else:
+        message = "Validation failed"
     return Response(
         status_code=422,
         content_type="application/json",
