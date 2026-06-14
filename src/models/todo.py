@@ -20,4 +20,5 @@ class Todo:
     next_occurrence_at: Optional[str] = None
     recurring_parent_id: str = TodoParent.standalone.value
     gsi_order_sk: Optional[str] = None
+    status_sk: Optional[str] = None
     ttl: Optional[int] = None

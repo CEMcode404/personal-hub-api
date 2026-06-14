@@ -36,11 +36,10 @@ setup:
 			AttributeName=id,AttributeType=S \
 			AttributeName=recurring_parent_id,AttributeType=S \
 			AttributeName=gsi_order_sk,AttributeType=S \
-			AttributeName=status,AttributeType=S \
-			AttributeName=updated_at,AttributeType=S \
+			AttributeName=status_sk,AttributeType=S \
 		--key-schema AttributeName=id,KeyType=HASH \
 		--global-secondary-indexes \
-			'[{"IndexName":"gsi_by_parent","KeySchema":[{"AttributeName":"recurring_parent_id","KeyType":"HASH"},{"AttributeName":"gsi_order_sk","KeyType":"RANGE"}],"Projection":{"ProjectionType":"ALL"}},{"IndexName":"gsi_by_status","KeySchema":[{"AttributeName":"status","KeyType":"HASH"},{"AttributeName":"updated_at","KeyType":"RANGE"}],"Projection":{"ProjectionType":"ALL"}}]' \
+			'[{"IndexName":"gsi_by_parent","KeySchema":[{"AttributeName":"recurring_parent_id","KeyType":"HASH"},{"AttributeName":"gsi_order_sk","KeyType":"RANGE"}],"Projection":{"ProjectionType":"ALL"}},{"IndexName":"gsi_by_parent_status","KeySchema":[{"AttributeName":"recurring_parent_id","KeyType":"HASH"},{"AttributeName":"status_sk","KeyType":"RANGE"}],"Projection":{"ProjectionType":"ALL"}}]' \
 		--billing-mode PAY_PER_REQUEST \
 		--region us-east-1 \
 		--endpoint-url http://localhost:8000 > /dev/null 2>&1 || true

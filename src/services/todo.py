@@ -10,7 +10,6 @@ from src.models.todo import Todo
 from src.constants.todo import TodoStatus, RecurrencePattern, ScheduleAction, TodoParent
 from src.utils.common import clean_internal_fields
 
-
 # Note: monthly/quarterly/semi_annual/annual recurrences chain off the previous
 # occurrence date, so day-of-month may drift downward (toward 28) when passing
 # through shorter months (e.g. Jan 31 -> Feb 28 -> Mar 28, not Mar 31). This is
@@ -24,11 +23,12 @@ RECURRENCE_MAP = {
     RecurrencePattern.annual: lambda dt: dt + relativedelta(years=1),
 }
 
-_INTERNAL_FIELDS = {"gsi_order_sk"}
+_INTERNAL_FIELDS = {"gsi_order_sk", "status_sk"}
 
 _CHILD_EDITABLE_FIELDS = {"title", "body", "status"}
 
 _scheduler_client = None
+
 
 def _get_scheduler_client():
     global _scheduler_client
@@ -46,6 +46,10 @@ def _clean(item: dict) -> dict:
 def _compute_order_sk(status: str, updated_at: str) -> str:
     prefix = "1" if status == TodoStatus.pending.value else "0"
     return f"{prefix}#{updated_at}"
+
+
+def _compute_status_sk(status: str, updated_at: str) -> str:
+    return f"{status}#{updated_at}"
 
 
 def list_all(limit: int = 10, cursor: dict = None, parent: str = TodoParent.standalone.value, status: str = None):
@@ -80,6 +84,7 @@ def create(body: CreateTodoRequest):
         updated_at=now,
         recurring_parent_id=recurring_parent_id,
         gsi_order_sk=_compute_order_sk(TodoStatus.pending.value, now),
+        status_sk=_compute_status_sk(TodoStatus.pending.value, now),
     )
     todo_repo.save(item)
     if body.notify and body.notify_at:
@@ -102,8 +107,8 @@ def update(id: str, body: UpdateTodoRequest):
         updates = {k: v for k, v in updates.items() if k in _CHILD_EDITABLE_FIELDS}
         status = updates.get("status", existing.get("status"))
         updates["gsi_order_sk"] = _compute_order_sk(status, now)
+        updates["status_sk"] = _compute_status_sk(status, now)
         return _clean(todo_repo.update(id, updates))
-
 
     # Notification schedule (independent of recurrence)
     notify = updates.get("notify", existing.get("notify"))
@@ -129,6 +134,7 @@ def update(id: str, body: UpdateTodoRequest):
 
     status = updates.get("status", existing.get("status"))
     updates["gsi_order_sk"] = _compute_order_sk(status, now)
+    updates["status_sk"] = _compute_status_sk(status, now)
 
     return _clean(todo_repo.update(id, updates))
 
@@ -161,6 +167,7 @@ def handle_recurrence(todo: dict):
     snapshot_data["updated_at"] = now
     snapshot_data["ttl"] = None
     snapshot_data["gsi_order_sk"] = _compute_order_sk(todo["status"], now)
+    snapshot_data["status_sk"] = _compute_status_sk(todo["status"], now)
     todo_repo.save(Todo(**snapshot_data))
 
     # Reset template: advance next_occurrence_at, back to pending
@@ -170,6 +177,7 @@ def handle_recurrence(todo: dict):
         "next_occurrence_at": next_occ.isoformat(),
         "updated_at": now,
         "gsi_order_sk": _compute_order_sk(TodoStatus.pending.value, now),
+        "status_sk": _compute_status_sk(TodoStatus.pending.value, now),
     }
 
     # Advance notify_at by the same interval, only if notify was set

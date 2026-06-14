@@ -639,9 +639,7 @@ Resources:
           AttributeType: S
         - AttributeName: gsi_order_sk
           AttributeType: S
-        - AttributeName: status
-          AttributeType: S
-        - AttributeName: updated_at
+        - AttributeName: status_sk
           AttributeType: S
       KeySchema:
         - AttributeName: id
@@ -655,11 +653,11 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
-        - IndexName: gsi_by_status
+        - IndexName: gsi_by_parent_status
           KeySchema:
-            - AttributeName: status
+            - AttributeName: recurring_parent_id
               KeyType: HASH
-            - AttributeName: updated_at
+            - AttributeName: status_sk
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
