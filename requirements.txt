@@ -14,3 +14,7 @@ s3transfer==0.17.0
 six==1.17.0
 typing_extensions==4.15.0
 urllib3==2.7.0
+
+# Test dependencies
+pytest
+pytest-mock
