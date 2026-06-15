@@ -18,3 +18,5 @@ urllib3==2.7.0
 # Test dependencies
 pytest
 pytest-mock
+pytest-cov
+

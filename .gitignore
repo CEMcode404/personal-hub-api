@@ -5,3 +5,4 @@ dependencies/
 env.local.json
 !env.local.example.json
 __pycache__
+.coverage
