@@ -1,7 +1,10 @@
+import nh3
 from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from src.constants.todo import TodoStatus, RecurrencePattern
+
+MAX_RECURRENCE_HORIZON = timedelta(days=730)  # 2 years
 
 
 class CreateTodoRequest(BaseModel):
@@ -18,7 +21,7 @@ class CreateTodoRequest(BaseModel):
     @field_validator("title")
     @classmethod
     def strip_title(cls, v: str) -> str:
-        v = v.strip()
+        v = nh3.clean(v, tags=set()).strip()
         if not v:
             raise ValueError("title cannot be empty or whitespace")
         return v
@@ -28,7 +31,7 @@ class CreateTodoRequest(BaseModel):
     def strip_body(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
-        v = v.strip()
+        v = nh3.clean(v, tags=set()).strip()
         return v or None
 
     @field_validator("notify_at", "next_occurrence_at")
@@ -44,12 +47,35 @@ class CreateTodoRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_fields(self):
+        now = datetime.now(timezone.utc)
+
         if self.notify and not self.notify_at:
             raise ValueError("notify_at is required when notify is enabled")
+
         if self.is_recurring and not (self.recurrence and self.next_occurrence_at):
             raise ValueError("recurrence and next_occurrence_at are required when is_recurring is enabled")
-        if self.notify_at and self.next_occurrence_at and self.notify_at > self.next_occurrence_at:
+
+        notify_dt = None
+        if self.notify_at:
+            notify_dt = datetime.fromisoformat(self.notify_at)
+            if notify_dt.tzinfo is None:
+                notify_dt = notify_dt.replace(tzinfo=timezone.utc)
+            if notify_dt < now:
+                raise ValueError("notify_at cannot be in the past")
+
+        next_dt = None
+        if self.next_occurrence_at:
+            next_dt = datetime.fromisoformat(self.next_occurrence_at)
+            if next_dt.tzinfo is None:
+                next_dt = next_dt.replace(tzinfo=timezone.utc)
+            if next_dt < now:
+                raise ValueError("next_occurrence_at cannot be in the past")
+            if next_dt > now + MAX_RECURRENCE_HORIZON:
+                raise ValueError("next_occurrence_at cannot be more than 2 years in the future")
+
+        if notify_dt and next_dt and notify_dt > next_dt:
             raise ValueError("notify_at must be earlier than or equal to next_occurrence_at")
+
         return self
 
 
@@ -70,7 +96,7 @@ class UpdateTodoRequest(BaseModel):
     def strip_title(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
-        v = v.strip()
+        v = nh3.clean(v, tags=set()).strip()
         if not v:
             raise ValueError("title cannot be empty or whitespace")
         return v
@@ -80,7 +106,7 @@ class UpdateTodoRequest(BaseModel):
     def strip_body(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
-        v = v.strip()
+        v = nh3.clean(v, tags=set()).strip()
         return v or None
 
     @field_validator("notify_at", "next_occurrence_at")
@@ -96,10 +122,33 @@ class UpdateTodoRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_fields(self):
+        now = datetime.now(timezone.utc)
+
         if self.notify and not self.notify_at:
             raise ValueError("notify_at is required when notify is enabled")
+
         if self.is_recurring and not (self.recurrence and self.next_occurrence_at):
             raise ValueError("recurrence and next_occurrence_at are required when is_recurring is enabled")
-        if self.notify_at and self.next_occurrence_at and self.notify_at > self.next_occurrence_at:
+
+        notify_dt = None
+        if self.notify_at:
+            notify_dt = datetime.fromisoformat(self.notify_at)
+            if notify_dt.tzinfo is None:
+                notify_dt = notify_dt.replace(tzinfo=timezone.utc)
+            if notify_dt < now:
+                raise ValueError("notify_at cannot be in the past")
+
+        next_dt = None
+        if self.next_occurrence_at:
+            next_dt = datetime.fromisoformat(self.next_occurrence_at)
+            if next_dt.tzinfo is None:
+                next_dt = next_dt.replace(tzinfo=timezone.utc)
+            if next_dt < now:
+                raise ValueError("next_occurrence_at cannot be in the past")
+            if next_dt > now + MAX_RECURRENCE_HORIZON:
+                raise ValueError("next_occurrence_at cannot be more than 2 years in the future")
+
+        if notify_dt and next_dt and notify_dt > next_dt:
             raise ValueError("notify_at must be earlier than or equal to next_occurrence_at")
+
         return self
