@@ -129,6 +129,10 @@ class TestCreateResearchRequest:
         research = CreateResearchRequest(title=VALID_TITLE, body=VALID_BODY)
         assert research.category is None
 
+    def test_category_explicit_none_valid(self):
+        research = CreateResearchRequest(title=VALID_TITLE, body=VALID_BODY, category=None)
+        assert research.category is None
+
     def test_category_valid(self):
         research = CreateResearchRequest(title=VALID_TITLE, body=VALID_BODY, category="AI")
         assert research.category == "AI"

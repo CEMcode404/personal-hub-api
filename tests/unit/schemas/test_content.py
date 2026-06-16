@@ -103,6 +103,10 @@ class TestCreateContentRequest:
         content = CreateContentRequest(title=VALID_TITLE, body=VALID_BODY)
         assert content.excerpt is None
 
+    def test_excerpt_explicit_none_valid(self):
+        content = CreateContentRequest(title=VALID_TITLE, body=VALID_BODY, excerpt=None)
+        assert content.excerpt is None
+
     def test_excerpt_valid(self):
         content = CreateContentRequest(title=VALID_TITLE, body=VALID_BODY, excerpt="A short summary")
         assert content.excerpt == "A short summary"

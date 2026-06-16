@@ -88,9 +88,25 @@ class TestCreateTodoRequest:
         todo = CreateTodoRequest(title="Task", notify=True, notify_at=almost_now)
         assert todo.notify_at == almost_now
 
+    def test_notify_at_naive_datetime_in_past_raises(self):
+        naive_past = (datetime.now(timezone.utc) - timedelta(days=1)).replace(tzinfo=None).isoformat()
+        with pytest.raises(ValidationError, match="notify_at cannot be in the past"):
+            CreateTodoRequest(title="Task", notify=True, notify_at=naive_past)
+
     def test_recurring_without_recurrence_and_next_occurrence_raises(self):
         with pytest.raises(ValidationError, match="recurrence and next_occurrence_at are required"):
             CreateTodoRequest(title="Task", is_recurring=True)
+
+    def test_invalid_next_occurrence_datetime_format(self):
+        with pytest.raises(ValidationError):
+            CreateTodoRequest(
+                title="Task", is_recurring=True,
+                recurrence=RecurrencePattern.daily, next_occurrence_at="not-a-date"
+            )
+
+    def test_invalid_next_occurrence_datetime_format(self):
+        with pytest.raises(ValidationError):
+            UpdateTodoRequest(next_occurrence_at="not-a-date")
 
     def test_recurring_with_only_recurrence_raises(self):
         with pytest.raises(ValidationError, match="recurrence and next_occurrence_at are required"):
@@ -127,6 +143,14 @@ class TestCreateTodoRequest:
                 is_recurring=True,
                 recurrence=RecurrencePattern.daily,
                 next_occurrence_at=past(1),
+            )
+
+    def test_next_occurrence_naive_datetime_in_past_raises(self):
+        naive_past = (datetime.now(timezone.utc) - timedelta(days=1)).replace(tzinfo=None).isoformat()
+        with pytest.raises(ValidationError, match="next_occurrence_at cannot be in the past"):
+            CreateTodoRequest(
+                title="Task", is_recurring=True,
+                recurrence=RecurrencePattern.daily, next_occurrence_at=naive_past
             )
 
     def test_next_occurrence_beyond_two_years_raises(self):
@@ -280,9 +304,16 @@ class TestUpdateTodoRequest:
                 next_occurrence_at=future(1),
             )
 
+    def test_notify_at_naive_datetime_in_past_raises(self):
+        naive_past = (datetime.now(timezone.utc) - timedelta(days=1)).replace(tzinfo=None).isoformat()
+        with pytest.raises(ValidationError, match="notify_at cannot be in the past"):
+            UpdateTodoRequest(notify=True, notify_at=naive_past)
+
+
     def test_invalid_next_occurrence_datetime_format(self):
         with pytest.raises(ValidationError):
             CreateTodoRequest(title="Task", is_recurring=True, recurrence=RecurrencePattern.daily, next_occurrence_at="not-a-date")
+
 
     def test_next_occurrence_in_past_raises(self):
         with pytest.raises(ValidationError, match="next_occurrence_at cannot be in the past"):

@@ -76,6 +76,10 @@ class TestCreateWikiRequest:
         wiki = CreateWikiRequest(title=VALID_TITLE, body=VALID_BODY)
         assert wiki.category is None
 
+    def test_category_explicit_none_valid(self):
+        wiki = CreateWikiRequest(title=VALID_TITLE, body=VALID_BODY, category=None)
+        assert wiki.category is None
+
     def test_category_strips_html(self):
         wiki = CreateWikiRequest(title=VALID_TITLE, body=VALID_BODY, category="<script>xss</script>Tech")
         assert "<script>" not in wiki.category
