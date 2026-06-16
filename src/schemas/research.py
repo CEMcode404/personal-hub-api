@@ -21,6 +21,13 @@ class ResearchValidatorMixin(BaseModel):
             return v
         return nh3.clean(v, tags=set()).strip()
 
+    @field_validator("category", mode="before", check_fields=False)
+    @classmethod
+    def sanitize_category(cls, v):
+        if v is None:
+            return v
+        return nh3.clean(v, tags=set()).strip() or None
+
     @field_validator("body", mode="before", check_fields=False)
     @classmethod
     def sanitize_body(cls, v):
