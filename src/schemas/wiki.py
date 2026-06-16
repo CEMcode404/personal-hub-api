@@ -1,4 +1,5 @@
 import re
+import uuid
 import nh3
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional
@@ -19,6 +20,13 @@ class WikiValidatorMixin(BaseModel):
         if v is None:
             return v
         return nh3.clean(v, tags=set()).strip()
+
+    @field_validator("category", mode="before", check_fields=False)
+    @classmethod
+    def sanitize_category(cls, v):
+        if v is None:
+            return v
+        return nh3.clean(v, tags=set()).strip() or None
 
     @field_validator("body", mode="before", check_fields=False)
     @classmethod
@@ -64,9 +72,9 @@ class WikiValidatorMixin(BaseModel):
             return v
         for id in v:
             try:
-                str(id)
-            except Exception:
-                raise ValueError(f"'{id}' is not a valid ID")
+                uuid.UUID(str(id))
+            except (ValueError, AttributeError, TypeError):
+                raise ValueError(f"'{id}' is not a valid UUID")
         return v
 
 
