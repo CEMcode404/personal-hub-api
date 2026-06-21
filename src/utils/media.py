@@ -8,6 +8,7 @@ from botocore.exceptions import ClientError
 s3_client = boto3.client(
     "s3",
     endpoint_url=os.environ.get("S3_ENDPOINT_URL") or None,
+    region_name=os.environ.get("AWS_REGION", "ap-southeast-1"),
 )
 
 MEDIA_BUCKET_NAME = os.environ["MEDIA_BUCKET_NAME"]
@@ -19,7 +20,7 @@ ALLOWED_CONTENT_TYPES = {
     "image/gif": "gif",
 }
 
-PRESIGN_EXPIRY_SECONDS = 300
+PRESIGN_EXPIRY_SECONDS = 900
 
 # LocalStack serves plain http; real CloudFront is always https.
 CDN_SCHEME = "http" if os.environ.get("S3_ENDPOINT_URL") else "https"
@@ -66,7 +67,11 @@ def generate_presigned_upload(filename: str) -> dict:
 
     upload_url = s3_client.generate_presigned_url(
         ClientMethod="put_object",
-        Params={"Bucket": MEDIA_BUCKET_NAME, "Key": key},
+        Params={
+            "Bucket": MEDIA_BUCKET_NAME,
+            "Key": key,
+            "ContentType": "application/octet-stream",
+        },
         ExpiresIn=PRESIGN_EXPIRY_SECONDS,
     )
 
