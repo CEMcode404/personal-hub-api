@@ -16,5 +16,20 @@ services:
       timeout: 3s
       retries: 3
 
+  localstack:
+    image: localstack/localstack:4.4.0
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+    volumes:
+      - localstack_data:/var/lib/localstack
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
 volumes:
   dynamodb_data:
+  localstack_data:

@@ -12,6 +12,12 @@ Parameters:
   OriginSecret:
     Type: AWS::SSM::Parameter::Value<String>
     Default: /personal-hub/origin-secret
+  MediaBucketName:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /personal-hub/media-bucket-name
+  MediaCdnDomain:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /personal-hub/media-cdn-domain
 
 Globals:
   Function:
@@ -28,6 +34,10 @@ Globals:
         NOTIFICATION_FUNCTION_ARN: ""
         SCHEDULER_ROLE_ARN: ""
         ALLOWED_ORIGIN: ""
+        S3_ENDPOINT_URL: ""
+        BROWSER_S3_ENDPOINT_URL: ""
+        MEDIA_BUCKET_NAME: ""
+        MEDIA_CDN_DOMAIN: ""
 
 Resources:
   # API Gateway
@@ -141,6 +151,8 @@ Resources:
           NOTIFICATION_FUNCTION_ARN: !GetAtt NotificationFunction.Arn
           SCHEDULER_ROLE_ARN: !GetAtt SchedulerRole.Arn
           ALLOWED_ORIGIN: !Ref AllowedOrigin
+          MEDIA_BUCKET_NAME: !Ref MediaBucketName
+          MEDIA_CDN_DOMAIN: !Ref MediaCdnDomain
       CodeUri: .
       Policies:
         - DynamoDBCrudPolicy:
@@ -166,6 +178,12 @@ Resources:
               Action:
                 - iam:PassRole
               Resource: !GetAtt SchedulerRole.Arn
+        - Statement:
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+                - s3:DeleteObject
+              Resource: !Sub arn:aws:s3:::${MediaBucketName}/*
 
       Events:
         # Content endpoints (public) - CloudFront secret header only

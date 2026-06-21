@@ -8,7 +8,7 @@ from src.constants.common import  ALLOWED_TAGS, ALLOWED_ATTRIBUTES
 BODY_CLEANER = nh3.Cleaner(
     tags=ALLOWED_TAGS,
     attributes=ALLOWED_ATTRIBUTES,
-    url_schemes={"http", "https", "mailto"},
+    url_schemes={"http", "https", "mailto", "blob"},
     link_rel="noopener noreferrer",
     filter_style_properties={"width", "text-align", "color", "background-color"},
 )
@@ -48,6 +48,20 @@ class ContentValidatorMixin(BaseModel):
             raise ValueError("Must start with http:// or https://")
         return v
 
+    @field_validator("images", mode="before", check_fields=False)
+    @classmethod
+    def validate_images(cls, v):
+        if v is None:
+            return v
+        if not isinstance(v, dict):
+            raise ValueError("images must be an object")
+        if len(v) > 30:
+            raise ValueError("Too many images in a single post")
+        for key, meta in v.items():
+            if not isinstance(meta, dict):
+                raise ValueError(f"images['{key}'] must be an object")
+        return v
+
 
 class CreateContentRequest(ContentValidatorMixin):
     title: str = Field(min_length=1, max_length=255)
@@ -56,6 +70,7 @@ class CreateContentRequest(ContentValidatorMixin):
     excerpt: Optional[str] = Field(default=None, max_length=500)
     tags: list[str] = Field(default=[], max_length=20)
     cover_image: Optional[str] = None
+    images: dict[str, dict] = Field(default_factory=dict)
 
 
 class UpdateContentRequest(ContentValidatorMixin):
@@ -66,3 +81,4 @@ class UpdateContentRequest(ContentValidatorMixin):
     excerpt: Optional[str] = Field(default=None, max_length=500)
     tags: Optional[list[str]] = Field(default=None, max_length=20)
     cover_image: Optional[str] = None
+    images: Optional[dict[str, dict]] = None

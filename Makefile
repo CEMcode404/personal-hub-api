@@ -81,10 +81,18 @@ setup:
 			AttributeName=category,AttributeType=S \
 		--key-schema AttributeName=id,KeyType=HASH \
 		--global-secondary-indexes \
-			'[{"IndexName":"gsi_ordering","KeySchema":[{"AttributeName":"gsi_constant","KeyType":"HASH"},{"AttributeName":"gsi_order_sk","KeyType":"RANGE"}],"Projection":{"ProjectionType":"INCLUDE","NonKeyAttributes":["title","category","tags","is_pinned","updated_at","cover_image"]}},{"IndexName":"gsi_by_category","KeySchema":[{"AttributeName":"category","KeyType":"HASH"},{"AttributeName":"gsi_order_sk","KeyType":"RANGE"}],"Projection":{"ProjectionType":"INCLUDE","NonKeyAttributes":["title","tags","is_pinned","cover_image","updated_at"]}}]' \
+			'[{"IndexName":"gsi_ordering","KeySchema":[{"AttributeName":"gsi_constant","KeyType":"HASH"},{"AttributeName":"updated_at","KeyType":"RANGE"}],"Projection":{"ProjectionType":"INCLUDE","NonKeyAttributes":["title","category","tags","is_pinned","updated_at","cover_image"]}},{"IndexName":"gsi_by_category","KeySchema":[{"AttributeName":"category","KeyType":"HASH"},{"AttributeName":"gsi_order_sk","KeyType":"RANGE"}],"Projection":{"ProjectionType":"INCLUDE","NonKeyAttributes":["title","tags","is_pinned","cover_image","updated_at"]}}]' \
 		--billing-mode PAY_PER_REQUEST \
 		--region ap-southeast-1 \
 		--endpoint-url http://localhost:8000 > /dev/null 2>&1 || true
+	AWS_ACCESS_KEY_ID=fake AWS_SECRET_ACCESS_KEY=fake aws s3 mb \
+		s3://personal-hub-media \
+		--region ap-southeast-1 \
+		--endpoint-url http://localhost:4566 > /dev/null 2>&1 || true
+	AWS_ACCESS_KEY_ID=fake AWS_SECRET_ACCESS_KEY=fake aws s3api put-bucket-cors \
+		--bucket personal-hub-media \
+		--cors-configuration '{"CORSRules":[{"AllowedMethods":["PUT"],"AllowedOrigins":["http://localhost:5173"],"AllowedHeaders":["*"],"MaxAgeSeconds":3000}]}' \
+		--endpoint-url http://localhost:4566 > /dev/null 2>&1 || true
 
 local:
 	sam build

@@ -180,6 +180,59 @@ class TestCreateContentRequest:
         content = CreateContentRequest(title=VALID_TITLE, body=VALID_BODY, cover_image="")
         assert content.cover_image == ""
 
+    # content images
+    def test_images_default_empty(self):
+        content = CreateContentRequest(title=VALID_TITLE, body=VALID_BODY)
+        assert content.images == {}
+ 
+    def test_images_valid_existing_key(self):
+        content = CreateContentRequest(
+            title=VALID_TITLE,
+            body=VALID_BODY,
+            images={"content-images/2026/06/abc123-photo.jpg": {}},
+        )
+        assert "content-images/2026/06/abc123-photo.jpg" in content.images
+ 
+    def test_images_valid_pending_entry(self):
+        content = CreateContentRequest(
+            title=VALID_TITLE,
+            body=VALID_BODY,
+            images={"blob:http://localhost:5173/abc-123": {"filename": "photo.jpg"}},
+        )
+        assert content.images["blob:http://localhost:5173/abc-123"]["filename"] == "photo.jpg"
+ 
+    def test_images_not_a_dict_raises(self):
+        with pytest.raises(ValidationError, match="images must be an object"):
+            CreateContentRequest(title=VALID_TITLE, body=VALID_BODY, images=["not", "a", "dict"])
+ 
+    def test_images_entry_not_a_dict_raises(self):
+        with pytest.raises(ValidationError, match="must be an object"):
+            CreateContentRequest(
+                title=VALID_TITLE,
+                body=VALID_BODY,
+                images={"some-key": "not-an-object"},
+            )
+ 
+    def test_images_too_many_raises(self):
+        with pytest.raises(ValidationError, match="Too many images"):
+            CreateContentRequest(
+                title=VALID_TITLE,
+                body=VALID_BODY,
+                images={f"content-images/{i}.jpg": {} for i in range(31)},
+            )
+ 
+    def test_images_exact_max_count_valid(self):
+        content = CreateContentRequest(
+            title=VALID_TITLE,
+            body=VALID_BODY,
+            images={f"content-images/{i}.jpg": {} for i in range(30)},
+        )
+        assert len(content.images) == 30
+ 
+    def test_images_empty_dict_valid(self):
+        content = CreateContentRequest(title=VALID_TITLE, body=VALID_BODY, images={})
+        assert content.images == {}
+
 
 class TestUpdateContentRequest:
 
@@ -275,6 +328,32 @@ class TestUpdateContentRequest:
     def test_cover_image_none_valid(self):
         content = UpdateContentRequest(cover_image=None)
         assert content.cover_image is None
+
+    def test_images_none_valid(self):
+        content = UpdateContentRequest(images=None)
+        assert content.images is None
+ 
+    def test_images_omitted_defaults_to_none(self):
+        content = UpdateContentRequest()
+        assert content.images is None
+ 
+    def test_images_valid_update(self):
+        content = UpdateContentRequest(
+            images={"content-images/2026/06/abc123-photo.jpg": {}},
+        )
+        assert "content-images/2026/06/abc123-photo.jpg" in content.images
+ 
+    def test_images_not_a_dict_raises(self):
+        with pytest.raises(ValidationError, match="images must be an object"):
+            UpdateContentRequest(images=["not", "a", "dict"])
+ 
+    def test_images_entry_not_a_dict_raises(self):
+        with pytest.raises(ValidationError, match="must be an object"):
+            UpdateContentRequest(images={"some-key": "not-an-object"})
+ 
+    def test_images_too_many_raises(self):
+        with pytest.raises(ValidationError, match="Too many images"):
+            UpdateContentRequest(images={f"content-images/{i}.jpg": {} for i in range(31)})
 
     def test_partial_update_only_title(self):
         content = UpdateContentRequest(title="New Title")
