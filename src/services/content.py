@@ -80,8 +80,6 @@ def _generate_unique_slug(title: str, exclude_id: str = None) -> str:
 def create(body: CreateContentRequest):
     now = datetime.now(timezone.utc).isoformat()
 
-    # body.images is only ever new uploads at create time — there's no
-    # "existing" set yet, so resolve_pending_images alone is sufficient.
     clean_images, upload_urls, body_replacements = resolve_pending_images(body.images)
     final_body = apply_body_replacements(body.body, body_replacements)
 
