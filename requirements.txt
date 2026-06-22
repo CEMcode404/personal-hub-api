@@ -1,7 +1,7 @@
 # Direct dependencies
 aws_lambda_powertools==3.29.0
 boto3==1.43.14
-pydantic
+pydantic>=2.0.0
 python-slugify
 python-dateutil
 nh3
@@ -14,9 +14,3 @@ s3transfer==0.17.0
 six==1.17.0
 typing_extensions==4.15.0
 urllib3==2.7.0
-
-# Test dependencies
-pytest
-pytest-mock
-pytest-cov
-

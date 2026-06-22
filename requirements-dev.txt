@@ -1,0 +1,7 @@
+# Inherits all prod dependencies
+-r requirements.txt
+
+# Test dependencies
+pytest
+pytest-mock
+pytest-cov
