@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from botocore.exceptions import ClientError
-from src.utils import media
+from utils import media
 
 class TestDiffImageKeys:
 

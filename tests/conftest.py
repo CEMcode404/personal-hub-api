@@ -1,4 +1,7 @@
 import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 # Environment variables needed at *import time* by modules under test
 # (e.g. src/utils/media.py reads MEDIA_BUCKET_NAME at module load).

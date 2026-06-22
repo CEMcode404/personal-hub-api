@@ -1,7 +1,7 @@
 from aws_lambda_powertools.event_handler.api_gateway import Router
-from src.repositories import notification as notification_repo
-from src.utils.response import success, handle_errors
-from src.utils.query_params import parse_int, parse_cursor
+from repositories import notification as notification_repo
+from utils.response import success, handle_errors
+from utils.query_params import parse_int, parse_cursor
 
 router = Router()
 

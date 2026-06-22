@@ -1,9 +1,9 @@
 import json
 from dataclasses import asdict
 from boto3.dynamodb.conditions import Key, Attr
-from src.db import get_table
-from src.models.todo import Todo
-from src.constants.todo import TodoParent
+from db import get_table
+from models.todo import Todo
+from constants.todo import TodoParent
 
 TABLE = "personal-hub-todos"
 

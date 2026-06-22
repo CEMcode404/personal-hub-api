@@ -1,4 +1,4 @@
-from src.utils.common import clean_internal_fields
+from utils.common import clean_internal_fields
 
 
 class TestCleanInternalFields:

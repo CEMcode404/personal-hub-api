@@ -125,8 +125,8 @@ Resources:
       BuildMethod: python3.13
     Properties:
       FunctionName: personal-hub-cloudfront-authorizer
-      Handler: src.handlers.authorizer.handler
-      CodeUri: .
+      Handler: handlers.authorizer.handler
+      CodeUri: src/
       Environment:
         Variables:
           ORIGIN_SECRET: !Ref OriginSecret
@@ -145,7 +145,8 @@ Resources:
       BuildMethod: python3.13
     Properties:
       FunctionName: personal-hub-content
-      Handler: src.main.handler
+      Handler: main.handler
+      CodeUri: src/
       Environment:
         Variables:
           NOTIFICATION_FUNCTION_ARN: !GetAtt NotificationFunction.Arn
@@ -153,7 +154,6 @@ Resources:
           ALLOWED_ORIGIN: !Ref AllowedOrigin
           MEDIA_BUCKET_NAME: !Ref MediaBucketName
           MEDIA_CDN_DOMAIN: !Ref MediaCdnDomain
-      CodeUri: .
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ContentTable
@@ -186,7 +186,6 @@ Resources:
                 - s3:CopyObject
                 - s3:DeleteObject
               Resource: !Sub arn:aws:s3:::${MediaBucketName}/*
-
       Events:
         # Content endpoints (public) - CloudFront secret header only
         ListContent:
@@ -369,12 +368,12 @@ Resources:
       BuildMethod: python3.13
     Properties:
       FunctionName: personal-hub-notification
-      Handler: src.handlers.eventbridge.handler
+      Handler: handlers.eventbridge.handler
+      CodeUri: src/
       Environment:
         Variables:
           NOTIFY_PHONE_NUMBER: !Ref NotifyPhoneNumber
           WEBSOCKET_ENDPOINT: !Sub https://${HubWebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/$default
-      CodeUri: .
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref TodosTable
@@ -500,8 +499,8 @@ Resources:
       BuildMethod: python3.13
     Properties:
       FunctionName: personal-hub-websocket
-      Handler: src.handlers.websocket.handler
-      CodeUri: .
+      Handler: handlers.websocket.handler
+      CodeUri: src/
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ConnectionsTable
@@ -517,8 +516,8 @@ Resources:
       BuildMethod: python3.13
     Properties:
       FunctionName: personal-hub-websocket-auth
-      Handler: src.handlers.websocket.authorizer
-      CodeUri: .
+      Handler: handlers.websocket.authorizer
+      CodeUri: src/
       Policies:
         - Statement:
             - Effect: Allow
@@ -784,7 +783,7 @@ Resources:
 Outputs:
   ApiEndpoint:
     Description: API endpoint
-    Value: !Sub https://${HubApi}.execute-api.${AWS::Region}.amazonaws.co
+    Value: !Sub https://${HubApi}.execute-api.${AWS::Region}.amazonaws.com
   WebSocketEndpoint:
     Description: WebSocket endpoint
     Value: !Sub wss://${HubWebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/$default

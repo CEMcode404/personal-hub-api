@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
-from src.constants.todo import TodoStatus, RecurrencePattern, TodoParent
+from constants.todo import TodoStatus, RecurrencePattern, TodoParent
 
 
 @dataclass

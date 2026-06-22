@@ -1,8 +1,8 @@
 import json
 from dataclasses import asdict
 from boto3.dynamodb.conditions import Key
-from src.db import get_table
-from src.models.research import Research
+from db import get_table
+from models.research import Research
 
 TABLE = "personal-hub-research"
 

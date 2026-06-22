@@ -1,8 +1,8 @@
 import json
 from dataclasses import asdict
 from boto3.dynamodb.conditions import Key, Attr
-from src.db import get_table
-from src.models.content import Content
+from db import get_table
+from models.content import Content
 
 TABLE = "personal-hub-content"
 

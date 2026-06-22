@@ -1,8 +1,8 @@
 import pytest
 from datetime import datetime, timezone, timedelta
 from pydantic import ValidationError
-from src.schemas.todo import CreateTodoRequest, UpdateTodoRequest
-from src.constants.todo import TodoStatus, RecurrencePattern
+from schemas.todo import CreateTodoRequest, UpdateTodoRequest
+from constants.todo import TodoStatus, RecurrencePattern
 
 
 def future(days=1):

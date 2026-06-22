@@ -3,7 +3,7 @@ import uuid
 import nh3
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional
-from src.constants.common import ALLOWED_TAGS, ALLOWED_ATTRIBUTES
+from constants.common import ALLOWED_TAGS, ALLOWED_ATTRIBUTES
 
 BODY_CLEANER = nh3.Cleaner(
     tags=ALLOWED_TAGS,

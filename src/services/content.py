@@ -1,11 +1,11 @@
 import uuid
 from datetime import datetime, timezone
-from src.schemas.content import CreateContentRequest, UpdateContentRequest
-from src.models.content import Content
-from src.repositories import content as content_repo
-from src.constants.content import ContentStatus
-from src.utils.common import clean_internal_fields
-from src.utils.media import (
+from schemas.content import CreateContentRequest, UpdateContentRequest
+from models.content import Content
+from repositories import content as content_repo
+from constants.content import ContentStatus
+from utils.common import clean_internal_fields
+from utils.media import (
     diff_image_keys,
     delete_media_keys,
     resolve_pending_images,

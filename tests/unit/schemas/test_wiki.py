@@ -1,7 +1,7 @@
 import pytest
 import uuid
 from pydantic import ValidationError
-from src.schemas.wiki import CreateWikiRequest, UpdateWikiRequest
+from schemas.wiki import CreateWikiRequest, UpdateWikiRequest
 
 
 VALID_BODY = "This is a valid wiki body."

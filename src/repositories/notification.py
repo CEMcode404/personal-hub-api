@@ -2,9 +2,9 @@ import json
 from dataclasses import asdict
 from datetime import datetime, timezone, timedelta
 from boto3.dynamodb.conditions import Key
-from src.db import get_table
-from src.models.notification import Notification
-from src.constants.notification import NotificationStatus
+from db import get_table
+from models.notification import Notification
+from constants.notification import NotificationStatus
 
 TABLE = "personal-hub-notifications"
 

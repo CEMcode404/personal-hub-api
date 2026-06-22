@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
-from src.constants.notification import NotificationStatus
+from constants.notification import NotificationStatus
 
 
 @dataclass

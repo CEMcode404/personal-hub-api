@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
-from src.schemas.content import CreateContentRequest, UpdateContentRequest
-from src.constants.content import ContentType, ContentStatus
+from schemas.content import CreateContentRequest, UpdateContentRequest
+from constants.content import ContentType, ContentStatus
 
 
 VALID_BODY = "This is a valid content body text."

@@ -1,10 +1,10 @@
 from aws_lambda_powertools.event_handler import APIGatewayHttpResolver, CORSConfig, Response
-from src.handlers.content import router as content_public
-from src.handlers.admin.content import router as content
-from src.handlers.research import router as research
-from src.handlers.todo import router as todo
-from src.handlers.notification import router as notification
-from src.handlers.wiki import router as wiki
+from handlers.content import router as content_public
+from handlers.admin.content import router as content
+from handlers.research import router as research
+from handlers.todo import router as todo
+from handlers.notification import router as notification
+from handlers.wiki import router as wiki
 from aws_lambda_powertools.event_handler.openapi.exceptions import RequestValidationError
 import traceback
 import os

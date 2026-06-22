@@ -1,8 +1,8 @@
 from aws_lambda_powertools.event_handler.api_gateway import Router
-from src.services import content as content_service
-from src.constants.content import ContentStatus
-from src.utils.response import success, handle_errors
-from src.utils.query_params import parse_int, parse_cursor, parse_str
+from services import content as content_service
+from constants.content import ContentStatus
+from utils.response import success, handle_errors
+from utils.query_params import parse_int, parse_cursor, parse_str
 
 router = Router()
 

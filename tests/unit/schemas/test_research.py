@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
-from src.schemas.research import CreateResearchRequest, UpdateResearchRequest
-from src.constants.research import ResearchStatus
+from schemas.research import CreateResearchRequest, UpdateResearchRequest
+from constants.research import ResearchStatus
 
 
 VALID_BODY = "This is a valid body text that meets minimum length"

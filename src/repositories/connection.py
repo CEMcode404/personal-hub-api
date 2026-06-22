@@ -1,4 +1,4 @@
-from src.db import get_table
+from db import get_table
 
 TABLE = "personal-hub-connections"
 

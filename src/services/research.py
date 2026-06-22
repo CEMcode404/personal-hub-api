@@ -1,11 +1,11 @@
 import uuid
 from datetime import datetime, timezone
-from src.repositories import research as research_repo
-from src.schemas.research import CreateResearchRequest, UpdateResearchRequest
-from src.models.research import Research
-from src.constants.research import ResearchStatus
-from src.utils.common import clean_internal_fields
-from src.utils.media import (
+from repositories import research as research_repo
+from schemas.research import CreateResearchRequest, UpdateResearchRequest
+from models.research import Research
+from constants.research import ResearchStatus
+from utils.common import clean_internal_fields
+from utils.media import (
     diff_image_keys,
     delete_media_keys,
     resolve_pending_images,

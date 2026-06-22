@@ -1,6 +1,6 @@
 import json
 from pydantic import BaseModel, field_validator
-from src.utils.response import success, error, handle_errors
+from utils.response import success, error, handle_errors
 
 
 class DummyModel(BaseModel):

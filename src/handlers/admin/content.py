@@ -1,10 +1,10 @@
 from typing import Annotated
 from aws_lambda_powertools.event_handler.api_gateway import Router
-from src.services import content as content_service
+from services import content as content_service
 from aws_lambda_powertools.event_handler.openapi.params import Body
-from src.schemas.content import CreateContentRequest, UpdateContentRequest
-from src.utils.response import success, handle_errors
-from src.utils.query_params import parse_int, parse_cursor, parse_str
+from schemas.content import CreateContentRequest, UpdateContentRequest
+from utils.response import success, handle_errors
+from utils.query_params import parse_int, parse_cursor, parse_str
 
 router = Router()
 

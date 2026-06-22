@@ -2,8 +2,8 @@ import re
 import nh3
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional
-from src.constants.content import ContentType, ContentStatus
-from src.constants.common import  ALLOWED_TAGS, ALLOWED_ATTRIBUTES
+from constants.content import ContentType, ContentStatus
+from constants.common import  ALLOWED_TAGS, ALLOWED_ATTRIBUTES
 
 BODY_CLEANER = nh3.Cleaner(
     tags=ALLOWED_TAGS,

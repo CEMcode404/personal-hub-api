@@ -1,4 +1,4 @@
-from src.utils.query_params import parse_int, parse_cursor, parse_str
+from utils.query_params import parse_int, parse_cursor, parse_str
 
 
 class TestParseInt:

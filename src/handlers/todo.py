@@ -1,11 +1,11 @@
 from typing import Annotated
 from aws_lambda_powertools.event_handler.api_gateway import Router
 from aws_lambda_powertools.event_handler.openapi.params import Body
-from src.services import todo as todo_service
-from src.schemas.todo import CreateTodoRequest, UpdateTodoRequest
-from src.constants.todo import TodoParent
-from src.utils.response import success, handle_errors
-from src.utils.query_params import parse_int, parse_cursor, parse_str
+from services import todo as todo_service
+from schemas.todo import CreateTodoRequest, UpdateTodoRequest
+from constants.todo import TodoParent
+from utils.response import success, handle_errors
+from utils.query_params import parse_int, parse_cursor, parse_str
 
 router = Router()
 

@@ -2,10 +2,10 @@ import os
 import json
 import uuid
 from datetime import datetime, timezone
-from src.repositories import notification as notification_repo
-from src.repositories import connection as connection_repo
-from src.models.notification import Notification
-from src.constants.notification import NotificationStatus
+from repositories import notification as notification_repo
+from repositories import connection as connection_repo
+from models.notification import Notification
+from constants.notification import NotificationStatus
 import boto3
 
 

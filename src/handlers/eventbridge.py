@@ -1,9 +1,9 @@
 from aws_lambda_powertools import Logger
 from aws_lambda_powertools.utilities.typing import LambdaContext
-from src.repositories import todo as todo_repo
-from src.services import notification as notification_service
-from src.services.todo import handle_recurrence
-from src.constants.todo import ScheduleAction
+from repositories import todo as todo_repo
+from services import notification as notification_service
+from services.todo import handle_recurrence
+from constants.todo import ScheduleAction
 
 logger = Logger()
 

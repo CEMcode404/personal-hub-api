@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional
-from src.constants.research import ResearchStatus
+from constants.research import ResearchStatus
 
 
 @dataclass

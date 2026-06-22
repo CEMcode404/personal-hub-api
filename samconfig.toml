@@ -1,5 +1,8 @@
 version = 0.1
 
+[default.build.parameters]
+manifest = "requirements.txt"
+
 [default.deploy.parameters]
 stack_name = "personal-hub-api"
 region = "ap-southeast-1"

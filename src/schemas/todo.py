@@ -2,7 +2,7 @@ import nh3
 from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Optional
 from datetime import datetime, timezone, timedelta
-from src.constants.todo import TodoStatus, RecurrencePattern
+from constants.todo import TodoStatus, RecurrencePattern
 
 MAX_RECURRENCE_HORIZON = timedelta(days=730)  # 2 years
 

@@ -1,10 +1,10 @@
 import uuid
 from datetime import datetime, timezone
-from src.repositories import wiki as wiki_repo
-from src.schemas.wiki import CreateWikiRequest, UpdateWikiRequest
-from src.models.wiki import Wiki
-from src.utils.common import clean_internal_fields
-from src.utils.media import (
+from repositories import wiki as wiki_repo
+from schemas.wiki import CreateWikiRequest, UpdateWikiRequest
+from models.wiki import Wiki
+from utils.common import clean_internal_fields
+from utils.media import (
     diff_image_keys,
     delete_media_keys,
     resolve_pending_images,

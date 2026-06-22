@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional
-from src.constants.content import ContentType, ContentStatus
+from constants.content import ContentType, ContentStatus
 
 @dataclass
 class Content:
