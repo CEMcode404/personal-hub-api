@@ -182,6 +182,8 @@ Resources:
             - Effect: Allow
               Action:
                 - s3:PutObject
+                - s3:GetObject
+                - s3:CopyObject
                 - s3:DeleteObject
               Resource: !Sub arn:aws:s3:::${MediaBucketName}/*
 
@@ -388,6 +390,10 @@ Resources:
                 - "mobiletargeting:SendMessages"
                 - "sns:Publish"
               Resource: "*"
+            - Effect: Allow
+              Action:
+                - execute-api:ManageConnections
+              Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HubWebSocketApi}/*
 
   SchedulerRole:
     Type: AWS::IAM::Role
@@ -778,7 +784,7 @@ Resources:
 Outputs:
   ApiEndpoint:
     Description: API endpoint
-    Value: !Sub https://${HubApi}.execute-api.${AWS::Region}.amazonaws.com
+    Value: !Sub https://${HubApi}.execute-api.${AWS::Region}.amazonaws.co
   WebSocketEndpoint:
     Description: WebSocket endpoint
     Value: !Sub wss://${HubWebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/$default
