@@ -8,7 +8,7 @@ from src.constants.common import ALLOWED_TAGS, ALLOWED_ATTRIBUTES
 BODY_CLEANER = nh3.Cleaner(
     tags=ALLOWED_TAGS,
     attributes=ALLOWED_ATTRIBUTES,
-    url_schemes={"http", "https", "mailto"},
+    url_schemes={"http", "https", "mailto", "blob"},
     link_rel="noopener noreferrer",
     filter_style_properties={"width", "text-align", "color", "background-color"},
 )
@@ -76,6 +76,21 @@ class WikiValidatorMixin(BaseModel):
             except (ValueError, AttributeError, TypeError):
                 raise ValueError(f"'{id}' is not a valid UUID")
         return v
+    
+    @field_validator("images", mode="before", check_fields=False)
+    @classmethod
+    def validate_images(cls, v):
+        if v is None:
+            return v
+        if not isinstance(v, dict):
+            raise ValueError("images must be an object")
+        if len(v) > 30:
+            raise ValueError("Too many images in a single wiki page")
+        for key, meta in v.items():
+            if not isinstance(meta, dict):
+                raise ValueError(f"images['{key}'] must be an object")
+        return v
+
 
 
 class CreateWikiRequest(WikiValidatorMixin):
@@ -87,6 +102,7 @@ class CreateWikiRequest(WikiValidatorMixin):
     is_pinned: bool = False
     links: list[str] = []
     related: list[str] = []
+    images: dict[str, dict] = Field(default_factory=dict)
 
 
 class UpdateWikiRequest(WikiValidatorMixin):
@@ -98,3 +114,4 @@ class UpdateWikiRequest(WikiValidatorMixin):
     is_pinned: Optional[bool] = None
     links: Optional[list[str]] = None
     related: Optional[list[str]] = None
+    images: Optional[dict[str, dict]] = None

@@ -79,6 +79,7 @@ setup:
 			AttributeName=gsi_constant,AttributeType=S \
 			AttributeName=gsi_order_sk,AttributeType=S \
 			AttributeName=category,AttributeType=S \
+			AttributeName=updated_at,AttributeType=S \
 		--key-schema AttributeName=id,KeyType=HASH \
 		--global-secondary-indexes \
 			'[{"IndexName":"gsi_ordering","KeySchema":[{"AttributeName":"gsi_constant","KeyType":"HASH"},{"AttributeName":"updated_at","KeyType":"RANGE"}],"Projection":{"ProjectionType":"INCLUDE","NonKeyAttributes":["title","category","tags","is_pinned","updated_at","cover_image"]}},{"IndexName":"gsi_by_category","KeySchema":[{"AttributeName":"category","KeyType":"HASH"},{"AttributeName":"gsi_order_sk","KeyType":"RANGE"}],"Projection":{"ProjectionType":"INCLUDE","NonKeyAttributes":["title","tags","is_pinned","cover_image","updated_at"]}}]' \
