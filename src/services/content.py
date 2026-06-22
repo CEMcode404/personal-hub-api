@@ -111,7 +111,8 @@ def update(id: str, body: UpdateContentRequest):
     updates = {k: v for k, v in body.model_dump(mode="json").items() if v is not None}
 
     if "title" in updates:
-        updates["slug"] = _generate_unique_slug(updates["title"], exclude_id=id)
+        if not existing.get("published_at"):
+            updates["slug"] = _generate_unique_slug(updates["title"], exclude_id=id)
 
     if updates.get("status") == ContentStatus.published.value:
         updates["published_at"] = now
