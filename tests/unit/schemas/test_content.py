@@ -233,6 +233,14 @@ class TestCreateContentRequest:
         content = CreateContentRequest(title=VALID_TITLE, body=VALID_BODY, images={})
         assert content.images == {}
 
+    def test_body_blob_src_survives_sanitization(self):
+        # Regression: blob: URLs must not be stripped by nh3 sanitization
+        # since they're present in body at save time (before upload completes)
+        # and get replaced server-side via apply_body_replacements.
+        body = '<img src="blob:http://localhost:5173/abc-123"> some filler text'
+        content = CreateContentRequest(title=VALID_TITLE, body=body)
+        assert "blob:http://localhost:5173/abc-123" in content.body
+
 
 class TestUpdateContentRequest:
 
