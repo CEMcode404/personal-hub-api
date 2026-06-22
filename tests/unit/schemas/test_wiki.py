@@ -71,6 +71,11 @@ class TestCreateWikiRequest:
         with pytest.raises(ValidationError):
             CreateWikiRequest(title=VALID_TITLE, body="<script></script>")
 
+    def test_body_blob_src_survives_sanitization(self):
+        body = '<img src="blob:http://localhost:5173/abc-123"> some filler text'
+        wiki = CreateWikiRequest(title=VALID_TITLE, body=body)
+        assert "blob:http://localhost:5173/abc-123" in wiki.body
+
     # --- Category ---
     def test_category_optional(self):
         wiki = CreateWikiRequest(title=VALID_TITLE, body=VALID_BODY)
@@ -191,6 +196,44 @@ class TestCreateWikiRequest:
     def test_related_random_text_raises(self):
         with pytest.raises(ValidationError, match="is not a valid UUID"):
             CreateWikiRequest(title=VALID_TITLE, body=VALID_BODY, related=["12345"])
+
+    # --- Images ---
+    def test_images_default_empty(self):
+        wiki = CreateWikiRequest(title=VALID_TITLE, body=VALID_BODY)
+        assert wiki.images == {}
+
+    def test_images_valid_existing_key(self):
+        wiki = CreateWikiRequest(
+            title=VALID_TITLE, body=VALID_BODY,
+            images={"wiki-private-images/2026/06/abc.jpg": {}},
+        )
+        assert "wiki-private-images/2026/06/abc.jpg" in wiki.images
+
+    def test_images_valid_pending_entry(self):
+        wiki = CreateWikiRequest(
+            title=VALID_TITLE, body=VALID_BODY,
+            images={"blob:http://localhost:5173/abc-123": {"filename": "photo.jpg"}},
+        )
+        assert wiki.images["blob:http://localhost:5173/abc-123"]["filename"] == "photo.jpg"
+
+    def test_images_not_a_dict_raises(self):
+        with pytest.raises(ValidationError, match="images must be an object"):
+            CreateWikiRequest(title=VALID_TITLE, body=VALID_BODY, images=["not", "a", "dict"])
+
+    def test_images_entry_not_a_dict_raises(self):
+        with pytest.raises(ValidationError, match="must be an object"):
+            CreateWikiRequest(title=VALID_TITLE, body=VALID_BODY, images={"key": "not-an-object"})
+
+    def test_images_too_many_raises(self):
+        with pytest.raises(ValidationError, match="Too many images"):
+            CreateWikiRequest(
+                title=VALID_TITLE, body=VALID_BODY,
+                images={f"wiki-private-images/{i}.jpg": {} for i in range(31)},
+            )
+
+    def test_images_empty_dict_valid(self):
+        wiki = CreateWikiRequest(title=VALID_TITLE, body=VALID_BODY, images={})
+        assert wiki.images == {}
 
 
 class TestUpdateWikiRequest:
@@ -314,3 +357,32 @@ class TestUpdateWikiRequest:
         assert wiki.title == "Updated Title"
         assert wiki.is_pinned is True
         assert wiki.related == [valid_id]
+
+    # --- Images ---
+    def test_images_none_valid(self):
+        wiki = UpdateWikiRequest(images=None)
+        assert wiki.images is None
+
+    def test_images_omitted_defaults_to_none(self):
+        wiki = UpdateWikiRequest()
+        assert wiki.images is None
+
+    def test_images_valid_update(self):
+        wiki = UpdateWikiRequest(
+            images={"wiki-private-images/2026/06/abc.jpg": {}},
+        )
+        assert "wiki-private-images/2026/06/abc.jpg" in wiki.images
+
+    def test_images_not_a_dict_raises(self):
+        with pytest.raises(ValidationError, match="images must be an object"):
+            UpdateWikiRequest(images=["not", "a", "dict"])
+
+    def test_images_entry_not_a_dict_raises(self):
+        with pytest.raises(ValidationError, match="must be an object"):
+            UpdateWikiRequest(images={"key": "not-an-object"})
+
+    def test_images_too_many_raises(self):
+        with pytest.raises(ValidationError, match="Too many images"):
+            UpdateWikiRequest(
+                images={f"wiki-private-images/{i}.jpg": {} for i in range(31)},
+            )

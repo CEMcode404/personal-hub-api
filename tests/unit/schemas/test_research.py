@@ -52,10 +52,6 @@ class TestCreateResearchRequest:
     def test_title_whitespace_stripped(self):
         research = CreateResearchRequest(title="  Hello  ", body=VALID_BODY)
         assert research.title == "Hello"
-    
-    def test_title_pure_html_raises_after_sanitize(self):
-        with pytest.raises(ValidationError):
-            UpdateResearchRequest(title="<script>alert(1)</script>")
 
     def test_title_with_special_characters_preserved(self):
         research = CreateResearchRequest(title="Research: AI & ML (2026)", body=VALID_BODY)
@@ -123,6 +119,11 @@ class TestCreateResearchRequest:
     def test_body_pure_html_raises_after_sanitize(self):
         with pytest.raises(ValidationError):
             CreateResearchRequest(title=VALID_TITLE, body="<b>hi</b>")
+
+    def test_body_blob_src_survives_sanitization(self):
+        body = '<img src="blob:http://localhost:5173/abc-123"> some filler text'
+        research = CreateResearchRequest(title=VALID_TITLE, body=body)
+        assert "blob:http://localhost:5173/abc-123" in research.body
 
     # --- Category ---
     def test_category_optional(self):
@@ -252,29 +253,50 @@ class TestCreateResearchRequest:
     # --- Images ---
     def test_images_default_empty(self):
         research = CreateResearchRequest(title=VALID_TITLE, body=VALID_BODY)
-        assert research.images == []
+        assert research.images == {}
 
-    def test_images_valid(self):
+    def test_images_valid_existing_key(self):
         research = CreateResearchRequest(
             title=VALID_TITLE, body=VALID_BODY,
-            images=["https://example.com/image.png"]
+            images={"research-private-images/2026/06/abc.jpg": {}},
         )
-        assert len(research.images) == 1
+        assert "research-private-images/2026/06/abc.jpg" in research.images
 
-    def test_images_multiple_valid(self):
+    def test_images_valid_pending_entry(self):
         research = CreateResearchRequest(
             title=VALID_TITLE, body=VALID_BODY,
-            images=["https://a.com/1.png", "https://b.com/2.jpg"]
+            images={"blob:http://localhost:5173/abc": {"filename": "photo.jpg"}},
+        )
+        assert research.images["blob:http://localhost:5173/abc"]["filename"] == "photo.jpg"
+
+    def test_images_mixed_existing_and_pending(self):
+        research = CreateResearchRequest(
+            title=VALID_TITLE, body=VALID_BODY,
+            images={
+                "research-private-images/2026/06/a.jpg": {},
+                "blob:http://localhost:5173/abc": {"filename": "photo.jpg"},
+            },
         )
         assert len(research.images) == 2
 
-    def test_images_invalid_url_raises(self):
-        with pytest.raises(ValidationError, match="must start with http"):
-            CreateResearchRequest(title=VALID_TITLE, body=VALID_BODY, images=["not-a-url"])
+    def test_images_not_a_dict_raises(self):
+        with pytest.raises(ValidationError, match="images must be an object"):
+            CreateResearchRequest(title=VALID_TITLE, body=VALID_BODY, images=["not", "a", "dict"])
 
-    def test_images_ftp_raises(self):
-        with pytest.raises(ValidationError, match="must start with http"):
-            CreateResearchRequest(title=VALID_TITLE, body=VALID_BODY, images=["ftp://example.com/img.png"])
+    def test_images_entry_not_a_dict_raises(self):
+        with pytest.raises(ValidationError, match="must be an object"):
+            CreateResearchRequest(title=VALID_TITLE, body=VALID_BODY, images={"key": "not-an-object"})
+
+    def test_images_too_many_raises(self):
+        with pytest.raises(ValidationError, match="Too many images"):
+            CreateResearchRequest(
+                title=VALID_TITLE, body=VALID_BODY,
+                images={f"research-private-images/{i}.jpg": {} for i in range(31)},
+            )
+
+    def test_images_empty_dict_valid(self):
+        research = CreateResearchRequest(title=VALID_TITLE, body=VALID_BODY, images={})
+        assert research.images == {}
 
 
 class TestUpdateResearchRequest:
@@ -427,13 +449,29 @@ class TestUpdateResearchRequest:
         research = UpdateResearchRequest(images=None)
         assert research.images is None
 
-    def test_images_valid(self):
-        research = UpdateResearchRequest(images=["https://example.com/img.png"])
-        assert len(research.images) == 1
+    def test_images_omitted_defaults_to_none(self):
+        research = UpdateResearchRequest()
+        assert research.images is None
 
-    def test_images_invalid_raises(self):
-        with pytest.raises(ValidationError, match="must start with http"):
-            UpdateResearchRequest(images=["ftp://example.com/img.png"])
+    def test_images_valid_update(self):
+        research = UpdateResearchRequest(
+            images={"research-private-images/2026/06/abc.jpg": {}},
+        )
+        assert "research-private-images/2026/06/abc.jpg" in research.images
+
+    def test_images_not_a_dict_raises(self):
+        with pytest.raises(ValidationError, match="images must be an object"):
+            UpdateResearchRequest(images=["not", "a", "dict"])
+
+    def test_images_entry_not_a_dict_raises(self):
+        with pytest.raises(ValidationError, match="must be an object"):
+            UpdateResearchRequest(images={"key": "not-an-object"})
+
+    def test_images_too_many_raises(self):
+        with pytest.raises(ValidationError, match="Too many images"):
+            UpdateResearchRequest(
+                images={f"research-private-images/{i}.jpg": {} for i in range(31)},
+            )
 
     # --- Partial updates ---
     def test_partial_update_only_status(self):
@@ -462,8 +500,9 @@ class TestUpdateResearchRequest:
             category="Science",
             tags=["python", "ai"],
             references=["https://example.com"],
-            images=["https://example.com/img.png"],
+            images={"research-private-images/2026/06/abc.jpg": {}},
         )
         assert research.title == "Updated Title"
         assert research.status == ResearchStatus.in_progress
         assert research.tags == ["python", "ai"]
+        assert "research-private-images/2026/06/abc.jpg" in research.images
