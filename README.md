@@ -22,20 +22,26 @@ A serverless REST API backend for my personal hub — starting with content mana
 1. Clone the repo
 
 ```bash
-   git clone <repo-url>
-   cd personal-hub-api
+git clone <repo-url>
+cd personal-hub-api
 ```
 
-2. Copy the env file and fill in values
+2. Install dependencies
 
 ```bash
-   cp env.local.example.json env.local.json
+pip install -r requirements-dev.txt
 ```
 
-3. Start the local environment
+3. Copy the env file and fill in values
 
 ```bash
-   make local
+cp env.local.example.json env.local.json
+```
+
+4. Start the local environment
+
+```bash
+make local
 ```
 
 This will:
@@ -44,6 +50,12 @@ This will:
 - Start DynamoDB Local in Docker
 - Create the required tables
 - Start the local API at `http://localhost:3000`
+
+### Running Tests
+
+```bash
+pytest
+```
 
 ### Available Commands
 
@@ -107,20 +119,57 @@ Deployment targets are configured in `samconfig.toml`. The default deploys to `a
 | Cognito              | JWT authentication for admin endpoints                 |
 | DynamoDB IAM         | Lambda only has access to its own tables               |
 
+## Infrastructure Security Audit
+
+Uses [Prowler](https://github.com/prowler-cloud/prowler) for periodic AWS security checks.
+
+### Setup
+
+```bash
+pip install prowler-cloud
+```
+
+### Run
+
+```bash
+ulimit -n 4096 && prowler aws --region ap-southeast-1
+```
+
+Reports are saved to `output/` as HTML, CSV, and JSON.
+
+### What to fix vs ignore
+
+| Severity | Action                             |
+| -------- | ---------------------------------- |
+| Critical | Fix immediately                    |
+| High     | Fix soon                           |
+| Medium   | Review — many are compliance noise |
+| Low      | Ignore for personal project        |
+
+Known acceptable findings for this project:
+
+- CloudWatch metric filter alarms — compliance requirement, overkill for personal use
+- DynamoDB CMK encryption — default AWS encryption is sufficient
+- IAM password policy — single user account, not applicable
+- VPC single region — intentional, single region deployment
+
 ## Project Structure
 
 ```
 src/
-├── handlers/       # HTTP layer — routes and request/response handling
+├── handlers/          # HTTP layer — routes and request/response handling
 │   └── authorizer.py  # CloudFront origin secret validator
-├── services/       # Business logic
-├── repositories/   # Database operations
-├── models/         # Data models
-├── schemas/        # Request body validation
-├── utils/          # Shared utilities
-├── db.py           # DynamoDB connection
-├── main.py         # Lambda handler entry point
-└── router.py       # Route registration
-waf-template.yaml   # WAF CloudFormation stack (us-east-1)
-deploy-waf.sh       # WAF deploy script
+├── services/          # Business logic
+├── repositories/      # Database operations
+├── models/            # Data models
+├── schemas/           # Request body validation
+├── utils/             # Shared utilities
+├── db.py              # DynamoDB connection
+├── main.py            # Lambda handler entry point
+└── router.py          # Route registration
+requirements.txt       # Production dependencies
+requirements-dev.txt   # Development and test dependencies
+waf-template.yaml      # WAF CloudFormation stack (us-east-1)
+deploy-waf.sh          # WAF deploy script
+samconfig.toml         # SAM deployment configuration
 ```
