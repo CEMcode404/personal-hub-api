@@ -14,6 +14,6 @@ class Research:
     category: Optional[str] = None
     tags: list[str] = field(default_factory=list)
     references: list[str] = field(default_factory=list)
-    images: list[str] = field(default_factory=list)
+    images: dict = field(default_factory=dict)
     # GSI: gsi_ordering — all research items, latest-updated first
     gsi_constant: str = "RESEARCH"

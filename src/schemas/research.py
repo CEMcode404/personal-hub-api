@@ -8,7 +8,7 @@ from src.constants.common import  ALLOWED_TAGS, ALLOWED_ATTRIBUTES
 BODY_CLEANER = nh3.Cleaner(
     tags=ALLOWED_TAGS,
     attributes=ALLOWED_ATTRIBUTES,
-    url_schemes={"http", "https", "mailto"},
+    url_schemes={"http", "https", "mailto", "blob"},
     link_rel="noopener noreferrer",
     filter_style_properties={"width", "text-align", "color", "background-color"},
 )
@@ -48,7 +48,7 @@ class ResearchValidatorMixin(BaseModel):
                 raise ValueError(f"Tag '{tag}' contains invalid characters")
         return sanitized
 
-    @field_validator("references", "images", mode="before", check_fields=False)
+    @field_validator("references", mode="before", check_fields=False)
     @classmethod
     def validate_urls(cls, v):
         if v is None:
@@ -57,6 +57,21 @@ class ResearchValidatorMixin(BaseModel):
             if not re.match(r"^https?://", url):
                 raise ValueError(f"'{url}' must start with http:// or https://")
         return v
+    
+    @field_validator("images", mode="before", check_fields=False)
+    @classmethod
+    def validate_images(cls, v):
+        if v is None:
+            return v
+        if not isinstance(v, dict):
+            raise ValueError("images must be an object")
+        if len(v) > 30:
+            raise ValueError("Too many images")
+        for key, meta in v.items():
+            if not isinstance(meta, dict):
+                raise ValueError(f"images['{key}'] must be an object")
+        return v
+
 
 
 class CreateResearchRequest(ResearchValidatorMixin):
@@ -65,7 +80,7 @@ class CreateResearchRequest(ResearchValidatorMixin):
     category: Optional[str] = None
     tags: list[str] = Field(default=[], max_length=20)
     references: list[str] = []
-    images: list[str] = []
+    images: dict[str, dict] = Field(default_factory=dict)
 
 
 class UpdateResearchRequest(ResearchValidatorMixin):
@@ -75,4 +90,4 @@ class UpdateResearchRequest(ResearchValidatorMixin):
     category: Optional[str] = None
     tags: Optional[list[str]] = Field(default=None, max_length=20)
     references: Optional[list[str]] = None
-    images: Optional[list[str]] = None
+    images: Optional[dict[str, dict]] = None
