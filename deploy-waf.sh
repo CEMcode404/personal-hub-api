@@ -6,11 +6,11 @@ STACK_NAME="personal-hub-waf"
 REGION_WAF="us-east-1"
 REGION_BACKEND="ap-southeast-1"
 
-# Check if SSM parameter already exists in us-east-1
+# Check if SSM parameter already exists
 echo "Checking if secret already exists..."
 EXISTING=$(aws ssm get-parameter \
   --name "$SSM_PARAM" \
-  --region "$REGION_WAF" \
+  --region "$REGION_BACKEND" \
   --no-cli-pager \
   --query "Parameter.Value" \
   --output text \
@@ -19,15 +19,6 @@ EXISTING=$(aws ssm get-parameter \
 if [ -z "$EXISTING" ]; then
   SECRET=$(python3 -c "import uuid; print(uuid.uuid4())")
   echo "Generated new secret."
-
-  echo "Storing secret in $REGION_WAF..."
-  aws ssm put-parameter \
-    --name "$SSM_PARAM" \
-    --value "$SECRET" \
-    --type String \
-    --region "$REGION_WAF" \
-    --no-cli-pager \
-    --profile personal-hub
 
   echo "Storing secret in $REGION_BACKEND..."
   aws ssm put-parameter \
@@ -38,15 +29,7 @@ if [ -z "$EXISTING" ]; then
     --no-cli-pager \
     --profile personal-hub
 else
-  echo "Secret already exists, syncing to $REGION_BACKEND..."
-  aws ssm put-parameter \
-    --name "$SSM_PARAM" \
-    --value "$EXISTING" \
-    --type String \
-    --region "$REGION_BACKEND" \
-    --overwrite \
-    --no-cli-pager \
-    --profile personal-hub
+  echo "Secret already exists in $REGION_BACKEND."
 fi
 
 # Deploy WAF stack (creates if not exists, updates if exists)

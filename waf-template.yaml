@@ -1,12 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Personal Hub WAF + Certificate - Must be deployed in us-east-1
 
-Parameters:
-  OriginSecretValue:
-    Type: AWS::SSM::Parameter::Value<String>
-    Default: /personal-hub/origin-secret
-    Description: Secret value read from SSM (created by deploy-waf.sh)
-
 Resources:
   HubWafWebAcl:
     Type: AWS::WAFv2::WebACL
