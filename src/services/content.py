@@ -57,12 +57,14 @@ def get_by_id(id: str):
 
 
 def get_by_slug(slug: str):
-    """Public read. Never resolves markers — published content should
-    never contain a marker in the first place."""
+    """Public read. Resolves markers — published content"""
     item = content_repo.find_by_slug(slug)
     if not item:
         raise ValueError("Content not found")
-    return _clean(item)
+    cleaned = _clean(item)
+    if cleaned.get("body"):
+        cleaned["body"] = resolve_body_markers_for_display(cleaned["body"])
+    return cleaned
 
 
 def _generate_unique_slug(title: str, exclude_id: str = None) -> str:
