@@ -200,7 +200,8 @@ def normalize_body_to_markers(body: str) -> str:
 
 def resolve_body_markers_for_display(body: str) -> str:
     """Admin-read only: swaps every media-key: marker for a fresh presigned
-    URL so the editor can display private images."""
+    URL so the editor can display private images. Never called on the
+    public read path."""
     if PRIVATE_MARKER_PREFIX not in body:
         return body
     pattern = re.compile(re.escape(PRIVATE_MARKER_PREFIX) + r'([^"\'\s)]+)')
