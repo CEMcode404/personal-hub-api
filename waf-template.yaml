@@ -9,6 +9,10 @@ Resources:
       Scope: CLOUDFRONT
       DefaultAction:
         Allow: {}
+      AssociationConfig:
+        RequestBodyAssociatedResourceTypeConfig:
+          CLOUDFRONT:
+            DefaultSizeInspectionLimit: KB_32
       Rules:
         - Name: RateLimitRule
           Priority: 1
@@ -31,6 +35,10 @@ Resources:
             ManagedRuleGroupStatement:
               VendorName: AWS
               Name: AWSManagedRulesCommonRuleSet
+              RuleActionOverrides:
+                - Name: SizeRestrictions_BODY
+                  ActionToUse:
+                    Count: {}
           VisibilityConfig:
             SampledRequestsEnabled: true
             CloudWatchMetricsEnabled: true
@@ -48,6 +56,25 @@ Resources:
             SampledRequestsEnabled: true
             CloudWatchMetricsEnabled: true
             MetricName: AWSManagedRulesKnownBadInputsRuleSet
+
+        - Name: LargeBodySizeLimitRule
+          Priority: 4
+          Action:
+            Block: {}
+          Statement:
+            SizeConstraintStatement:
+              FieldToMatch:
+                Body:
+                  OversizeHandling: MATCH
+              ComparisonOperator: GT
+              Size: 1048576  # 1 MB
+              TextTransformations:
+                - Priority: 0
+                  Type: NONE
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: LargeBodySizeLimitRule
 
       VisibilityConfig:
         SampledRequestsEnabled: true
