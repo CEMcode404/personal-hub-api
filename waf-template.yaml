@@ -39,6 +39,9 @@ Resources:
                 - Name: SizeRestrictions_BODY
                   ActionToUse:
                     Count: {}
+                - Name: CrossSiteScripting_BODY
+                  ActionToUse:
+                    Count: {}
           VisibilityConfig:
             SampledRequestsEnabled: true
             CloudWatchMetricsEnabled: true
