@@ -1,12 +1,19 @@
 # Personal Hub API
 
-A serverless REST API backend for my personal hub — starting with content management, built to expand into other personal apps over time.
+A serverless backend for my personal hub: content publishing, todos with scheduled reminders, a wiki, research notes, and real-time notifications.
+
+> **Status:** Archived. This project is no longer deployed or maintained. It's kept public as a reference project.
 
 ## Tech Stack
 
 - **Runtime** — Python 3.13
-- **Infrastructure** — AWS SAM (Lambda + API Gateway + DynamoDB + WAF)
-- **Local Development** — Docker + DynamoDB Local
+- **API** — API Gateway (HTTP + WebSocket), Lambda
+- **Auth** — Cognito with mandatory TOTP MFA
+- **Data** — DynamoDB, S3
+- **Scheduling & notifications** — EventBridge Scheduler, SNS
+- **Edge** — CloudFront, WAF, ACM
+- **Infrastructure** — AWS SAM, CloudFormation
+- **Local Development** — Docker, DynamoDB Local, LocalStack (S3)
 
 ## Prerequisites
 
@@ -47,9 +54,9 @@ make local
 This will:
 
 - Build the Lambda function
-- Start DynamoDB Local in Docker
-- Create the required tables
-- Start the local API at `http://localhost:3000`
+- Start DynamoDB Local and LocalStack (S3) in Docker
+- Create the required tables and media bucket
+- Start the local API at `http://localhost:8080` (authorizers are disabled locally)
 
 ### Running Tests
 
@@ -59,14 +66,14 @@ pytest
 
 ### Available Commands
 
-| Command       | Description                                                |
-| ------------- | ---------------------------------------------------------- |
-| `make local`  | Start the full local dev environment                       |
-| `make stop`   | Stop all local services (data is preserved)                |
-| `make reset`  | Stop all local services and wipe all data                  |
-| `make setup`  | Create DynamoDB tables (run once after first `make local`) |
-| `make reload` | Reload the page to reflect the new changes                 |
-| `make deploy` | Deploy to prod                                             |
+| Command       | Description                                                                       |
+| ------------- | --------------------------------------------------------------------------------- |
+| `make local`  | Start the full local dev environment                                              |
+| `make stop`   | Stop all local services (data is preserved)                                       |
+| `make reset`  | Stop all local services and wipe all data                                         |
+| `make setup`  | Create local DynamoDB tables and S3 bucket (runs automatically with `make local`) |
+| `make reload` | Rebuild without cache and restart the local environment (data is preserved)       |
+| `make deploy` | Deploy to prod                                                                    |
 
 ## Deployment
 
@@ -80,10 +87,21 @@ The WAF stack must be deployed once before the main backend. It creates the orig
 
 This will:
 
-- Generate a random secret and store it in SSM Parameter Store (`us-east-1` and `ap-southeast-1`)
-- Deploy the WAF Web ACL to `us-east-1` with rate limiting and AWS managed rules (XSS, SQLi)
+- Generate a random secret and store it in SSM Parameter Store (`ap-southeast-1`)
+- Deploy the WAF Web ACL to `us-east-1` with rate limiting and AWS managed rules (common exploits, known bad inputs)
 
 ### First Time — Backend
+
+Create the required SSM parameters first:
+
+| Parameter                           | Description                     |
+| ----------------------------------- | ------------------------------- |
+| `/personal-hub/notify-phone-number` | Phone number for SMS reminders  |
+| `/personal-hub/allowed-origin`      | Frontend origin for CORS        |
+| `/personal-hub/media-bucket-name`   | S3 bucket for uploaded media    |
+| `/personal-hub/media-cdn-domain`    | CloudFront domain serving media |
+
+Then deploy:
 
 ```bash
 sam build
@@ -91,6 +109,8 @@ sam deploy --guided
 ```
 
 Follow the prompts — SAM will create the required S3 bucket and save your config to `samconfig.toml`.
+
+After deploying, create your admin user in Cognito and run `./manage-mfa.sh` to set up MFA.
 
 ### Subsequent Deploys
 
@@ -111,13 +131,13 @@ Deployment targets are configured in `samconfig.toml`. The default deploys to `a
 
 ## Security
 
-| Layer                | Protection                                             |
-| -------------------- | ------------------------------------------------------ |
-| WAF on CloudFront    | XSS, SQLi, rate limiting at edge                       |
-| Origin secret header | Only CloudFront can call API Gateway directly          |
-| Lambda authorizer    | Validates secret header before invoking business logic |
-| Cognito              | JWT authentication for admin endpoints                 |
-| DynamoDB IAM         | Lambda only has access to its own tables               |
+| Layer                | Protection                                               |
+| -------------------- | -------------------------------------------------------- |
+| WAF on CloudFront    | Common exploits, known bad inputs, rate limiting at edge |
+| Origin secret header | Only CloudFront can call API Gateway directly            |
+| Lambda authorizer    | Validates secret header before invoking business logic   |
+| Cognito              | JWT authentication with mandatory TOTP MFA               |
+| DynamoDB IAM         | Lambda only has access to its own tables                 |
 
 ## Infrastructure Security Audit
 
@@ -167,9 +187,14 @@ src/
 ├── db.py              # DynamoDB connection
 ├── main.py            # Lambda handler entry point
 └── router.py          # Route registration
-requirements.txt       # Production dependencies
-requirements-dev.txt   # Development and test dependencies
+tests/                 # Unit tests
+template.yaml          # Main SAM template (API, Lambda, DynamoDB, Cognito)
 waf-template.yaml      # WAF CloudFormation stack (us-east-1)
 deploy-waf.sh          # WAF deploy script
+manage-mfa.sh          # Cognito MFA setup and recovery
+docker-compose.yml     # Local DynamoDB and LocalStack
+Makefile               # Local dev commands
 samconfig.toml         # SAM deployment configuration
+requirements.txt       # Production dependencies
+requirements-dev.txt   # Development and test dependencies
 ```
